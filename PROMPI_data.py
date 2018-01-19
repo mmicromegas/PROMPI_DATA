@@ -1,6 +1,6 @@
 import numpy as np
 
-class PROMPI_rans:
+class PROMPI_ransdat:
 
     def __init__(self,filename):
 
@@ -72,28 +72,11 @@ class PROMPI_rans:
 		
         frans.close()
         fhead.close()		
-
+ 
     def rans(self):	
         return self.eh
-	
-		
-    def ranslist(self):
-        return np.asarray(self.xzn0)
-
-    def ransdict(self):
-        print self.eh.keys()
-		
-    def sterad(self):
-        pass
-		
-    def grad(self):
-        pass
-		
-    def div(self):
-        pass
-		
-     
-class PROMPI_blck:
+ 
+class PROMPI_blockdat:
 
     def __init__(self,filename):
         pass
