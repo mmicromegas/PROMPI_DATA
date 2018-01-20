@@ -10,5 +10,5 @@ xbr = 9.8e8
 
 ob_rans.plot_dd_tt(xbl,xbr)
 ob_rans.plot_enuc_ei(xbl,xbr)
-ob_rans.plot_dd_tt_tycho_ini()
-ob_rans.plot_x_tycho_ini()
+#ob_rans.plot_dd_tt_tycho_ini()
+#ob_rans.plot_x_tycho_ini()

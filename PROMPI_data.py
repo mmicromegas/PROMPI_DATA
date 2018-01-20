@@ -23,6 +23,8 @@ class PROMPI_ransdat:
             line = fhead.readline().strip()
             self.ransl.append(line)  
 
+        print(self.ransl)
+            
         xznl = [] 
         xzn0 = []
         xznr = []
@@ -62,7 +64,7 @@ class PROMPI_ransdat:
         self.eh.update(eh_xzn0)
 		
         i = 0
-        print(self.ransl)
+#        print(self.ransl)
 		
         for s in self.ransl:
             eh_field = 'eh_'+str(s)
