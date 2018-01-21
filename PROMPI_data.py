@@ -2,8 +2,19 @@ import numpy as np
 
 class PROMPI_ransdat:
 
-    def __init__(self,filename):
+    def __init__(self,filename,ftycho):
 
+        tdata = open(ftycho,'r')
+
+        t_line1 = tdata.readline().split()
+        nspec = int(t_line1[1])
+
+        xnuc = []
+        for i in range(nspec):
+            xnuc.append(tdata.readline().split()[0])    
+        
+        tdata.close()
+        
         fhead = open(filename.replace("ransdat","ranshead"),'r') 
 
         header_line1 = fhead.readline().split()
@@ -21,8 +32,13 @@ class PROMPI_ransdat:
         self.ransl = []		
         for line in range(nrans):
             line = fhead.readline().strip()
-            self.ransl.append(line)  
+            self.ransl.append(line)
 
+#        for inuc in range(nspec):
+#            self.ransl = [field.replace(str(inuc+1),str(xnuc[inuc])) for field in self.ransl]
+#            self.ransl = [field.replace("0","") for field in self.ransl]    
+
+            
         print(self.ransl)
             
         xznl = [] 
@@ -77,7 +93,16 @@ class PROMPI_ransdat:
  
     def rans(self):	
         return self.eh
- 
+
+    def ranslist(self):
+        return np.asarray(self.xzn0)
+
+    def ransdict(self):
+        print self.eh.keys()
+		
+    def sterad(self):
+        pass
+    
 class PROMPI_blockdat:
 
     def __init__(self,filename):
