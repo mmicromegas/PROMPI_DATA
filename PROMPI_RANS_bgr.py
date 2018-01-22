@@ -489,8 +489,10 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
         xo16 = self.data['eh_x0005']
         xne20 = self.data['eh_x0006']
         xsi28 = self.data['eh_x0009']
-        enuc = self.data['eh_enuc1']+self.data['eh_enuc2']
-        
+#        enuc = self.data['eh_enuc1']+self.data['eh_enuc2']
+        enuc1 = self.data['eh_enuc1']
+        enuc2 = np.abs(self.data['eh_enuc2']) 
+ 
         plt.figure(figsize=(7,6))
 
         lb = 1.e3
@@ -596,7 +598,8 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
         plt.semilogy(rc,en_ne20,label=r"$\dot{\epsilon}_{\rm nuc}$ (Ne$^{20}$)")
         plt.semilogy(rc,en_si28,label=r"$\dot{\epsilon}_{\rm nuc}$ (Si$^{28}$)")
         plt.semilogy(rc,en_c12+en_o16+en_ne20+en_si28,label='total',color='k')
-        plt.semilogy(rc,enuc/dd,color='m',linestyle='--',label='nuc d')
+        plt.semilogy(rc,enuc1,color='m',linestyle='--',label='nuc d')
+        plt.semilogy(rc,enuc2,color='r',linestyle='--',label='-neutrinos')		
 
         plt.legend(loc=1,prop={'size':13})
 
@@ -604,7 +607,7 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
         plt.xlabel('r ($10^8$ cm)')
 
         axvline(x=5.65,color='k',linewidth=1)
-        plt.show()
+        plt.show(block=False)
 #        text(9.,1.e6,r"ob",fontsize=42,color='k')
 
 #        savefig(data_prefix+'nuclear_energy_gen.eps')
