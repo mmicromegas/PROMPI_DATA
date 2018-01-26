@@ -7,8 +7,8 @@ from pylab import *
 
 class PROMPI_bgr(prd.PROMPI_ransdat,object):
 
-    def __init__(self,filename,ftycho):
-        super(PROMPI_bgr,self).__init__(filename,ftycho) 
+    def __init__(self,filename):
+        super(PROMPI_bgr,self).__init__(filename) 
         self.data = self.rans()
 
     def SetMatplotlibParams(self):
@@ -85,12 +85,12 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
         
     def plot_lin_q1q2(self,xbl,xbr,f1,f2,xlabel_1,ylabel_1,ylabel_2,plabel_1,plabel_2):
         rr = np.asarray(self.data['xzn0'])		
-        if (f1) == 'eh_enuc':
-            f_1 = self.data['eh_enuc1']+self.data['eh_enuc2']
+        if (f1) == 'enuc':
+            f_1 = self.data['enuc1']+self.data['enuc2']
             f_2 = self.data[f2]
-        elif (f2) == 'eh_enuc':
+        elif (f2) == 'enuc':
             f_1 = self.data[f1]
-            f_2 = self.data['eh_enuc1']+self.data['eh_enuc2']
+            f_2 = self.data['enuc1']+self.data['enuc2']
         else:
              self.data[f1]
              self.data[f2]
@@ -482,16 +482,16 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
         """Plot nuclear reaction timescales"""
 
         rc = np.asarray(self.data['xzn0'])/1.e8
-        tt = self.data['eh_tt']
-        dd = self.data['eh_dd']
+        tt = self.data['tt']
+        dd = self.data['dd']
 
-        xc12 = self.data['eh_x0004']
-        xo16 = self.data['eh_x0005']
-        xne20 = self.data['eh_x0006']
-        xsi28 = self.data['eh_x0009']
-#        enuc = self.data['eh_enuc1']+self.data['eh_enuc2']
-        enuc1 = self.data['eh_enuc1']
-        enuc2 = np.abs(self.data['eh_enuc2']) 
+        xc12 = self.data['x0004']
+        xo16 = self.data['x0005']
+        xne20 = self.data['x0006']
+        xsi28 = self.data['x0009']
+#        enuc = self.data['enuc1']+self.data['enuc2']
+        enuc1 = self.data['enuc1']
+        enuc2 = np.abs(self.data['enuc2']) 
  
         plt.figure(figsize=(7,6))
 
@@ -600,7 +600,8 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
         plt.semilogy(rc,en_c12+en_o16+en_ne20+en_si28,label='total',color='k')
         plt.semilogy(rc,enuc1,color='m',linestyle='--',label='nuc d')
         plt.semilogy(rc,enuc2,color='r',linestyle='--',label='-neutrinos')		
-
+#        plt.semilogy(rc,enuc1+enuc2,color='b',linestyle='--',label='nuc+neutrinos')	
+		
         plt.legend(loc=1,prop={'size':13})
 
         plt.ylabel(r"$\dot{\epsilon}_{\rm nuc}$ \ (erg g$^{-1}$ s$^{-1}$)")
