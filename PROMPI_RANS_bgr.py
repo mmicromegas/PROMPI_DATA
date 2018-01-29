@@ -18,7 +18,7 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
         # plt.rc('text',usetex=True)
         # plt.rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
         plt.rc('font',**{'family':'serif','serif':['Times New Roman']})
-        plt.rc('font',size=22.)
+        plt.rc('font',size=14.)
         plt.rc('lines',linewidth=2,markeredgewidth=2.,markersize=10)
         plt.rc('axes',linewidth=1.5)
         plt.rcParams['xtick.major.size']=8.
@@ -82,6 +82,25 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
 
         plt.show(block=False)
 
+    def plot_lin_q1(self,xbl,xbr,f1,xlabel_1,ylabel_1,plabel_1):
+        rr = np.asarray(self.data['xzn0'])		
+        f_1 = self.data[f1]
+		
+        idxl, idxr = self.idx_bndry(xbl,xbr)
+		
+        to_plt1 = f_1
+	
+        fig, ax1 = plt.subplots(figsize=(7,6))
+		
+        ax1.axis([xbl,xbr,np.min(to_plt1[idxl:idxr]),np.max(to_plt1[idxl:idxr])])
+        ax1.plot(rr,to_plt1,color='b',label = plabel_1)
+
+        ax1.set_xlabel(xlabel_1)
+        ax1.set_ylabel(ylabel_1)
+        ax1.legend(loc=7,prop={'size':18})
+
+        plt.show(block=False)
+        
         
     def plot_lin_q1q2(self,xbl,xbr,f1,f2,xlabel_1,ylabel_1,ylabel_2,plabel_1,plabel_2):
         rr = np.asarray(self.data['xzn0'])		

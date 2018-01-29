@@ -1,12 +1,13 @@
 import PROMPI_data as pt
 import numpy as np
 import os
+import sys
 import matplotlib.pyplot as plt       
 	   
 datadir = './DATA/'
 dataout = 'tseries_ransdat'
-trange = [0.2,0.5]
-tavg = 0.1
+trange = [0.0 ,0.023]
+tavg = 0.001
 
 ransdat = [file for file in os.listdir(datadir) if "ransdat" in file]
 ransdat = [file.replace(file,datadir+file) for file in ransdat]	
@@ -55,6 +56,14 @@ print('Number of time averaged snapshots: ', ntc)
 print('Averaged time range: ',round(timecmin,3), round(timecmax,3))
 print('qqx',qqx)
 
+if ntc == 0:
+    print("----------")
+    print("rans_tseries.py ERROR: Zero time-averaged snapshots.")
+    print("rans_tseries.py Adjust your trange and averaging window.")
+    print("rans_tseries.py EXITING ... ")
+    print("----------")
+    sys.exit()
+
 # READ IN DATA
 
 eh = []
@@ -87,9 +96,10 @@ for s in ts.ransl:
 
 print(ts.ransl)
 
-fld = 'tt'
+fld = 'enuc1'
 a = eht[fld]
-b = a[:][2]
+intc = ntc - 1
+b = a[:][intc]
 
 #print(b)
 
@@ -105,7 +115,7 @@ for i in range(nt):
     ts = pt.PROMPI_ransdat(filename)
     plt.plot(ts.rans()[fld])
 
-ax1.plot(b,color='k')
+#ax1.plot(b,color='k')
 	
 plt.show(block=False)
 	

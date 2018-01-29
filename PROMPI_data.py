@@ -106,9 +106,6 @@ class PROMPI_ransdat:
     def rans_qqx(self):
         return self.qqx
 
-    def ranslist(self):
-        return np.asarray(self.xzn0)
-
     def ransdict(self):
         print self.eh.keys()
 		
@@ -117,5 +114,118 @@ class PROMPI_ransdat:
     
 class PROMPI_blockdat:
 
-    def __init__(self,filename):
-        pass
+    def __init__(self,filename,dat):
+
+        fhead = open(filename.replace("blockdat","blockhead"),'r')
+#        fhead = open(filename.replace("bindata","header"),'r')        
+
+        header_line1 = fhead.readline().split()
+        header_line2 = fhead.readline().split()
+        header_line3 = fhead.readline().split()
+        header_line4 = fhead.readline().split()
+
+        self.nstep  = int(header_line1[0])
+        self.time   = float(header_line1[1])
+        
+        self.qqx    = int(header_line2[0])
+        self.qqy    = int(header_line2[1])
+        self.qqz    = int(header_line2[2])
+        self.nnuc   = int(header_line2[3])
+        self.nvar   = int(header_line2[4])
+
+#        header_line5 = fhead.readline().split()
+#        header_line6 = fhead.readline().split()
+#        header_line7 = fhead.readline().split()
+#        header_line8 = fhead.readline().split()
+
+        
+        
+        ndims = [self.qqx,self.qqy,self.qqz]
+
+        self.varl = []		
+        for line in range(self.nvar):
+            line = fhead.readline().strip()
+            self.varl.append(line)
+
+        self.interior_mass = float(fhead.readline())
+            
+        xznl = [] 
+        xzn0 = []
+        xznr = []
+        yznl = []
+        yzn0 = []
+        yznr = [] 
+        zznl = []
+        zzn0 = []
+        zznr = []
+
+        # parse grid  (todo: get rid of the hard-coded values
+        # perhaps readline format?
+         
+        il_l = 8
+        il_r = 22
+
+        i0_l = 23
+        i0_r = 38
+
+        ir_l = 39
+        ir_r = 54
+        
+        for line in range(self.qqx):
+            line = fhead.readline().strip()        
+            xznl.append(float(line[il_l:il_r].strip()))
+            xzn0.append(float(line[i0_l:i0_r].strip()))
+            xznr.append(float(line[ir_l:ir_r].strip()))
+			
+        for line in range(self.qqy):
+            line = fhead.readline().strip()        
+            yznl.append(float(line[il_l:il_r].strip()))
+            yzn0.append(float(line[i0_l:i0_r].strip()))
+            yznr.append(float(line[ir_l:ir_r].strip()))	
+
+        for line in range(self.qqz):
+            line = fhead.readline().strip()
+            zznl.append(float(line[il_l:il_r].strip()))
+            zzn0.append(float(line[i0_l:i0_r].strip()))
+            zznr.append(float(line[ir_l:ir_r].strip()))	
+        
+
+        ivar   = self.varl.index(dat)
+        irecl  = self.qqx*self.qqy*self.qqz
+        nbyte  = irecl*4
+        dstart = int(ivar*nbyte)
+
+        print(ivar,irecl,nbyte,dstart,self.qqx,self.qqy,self.qqz)
+        
+        fblock = open(filename,'rb')
+
+        # offset read pointer (argument offset is a byte count)         
+        fblock.seek(dstart)
+
+# https://docs.scipy.org/doc/numpy-1.13.0/reference/arrays.dtypes.html#arrays-dtypes-constructing
+        
+#       '<f' little-endian single-precision float
+#       '>f' little-endian single-precision float
+
+# >>> dt = np.dtype('b')  # byte, native byte order
+# >>> dt = np.dtype('>H') # big-endian unsigned short
+# >>> dt = np.dtype('<f') # little-endian single-precision float
+# >>> dt = np.dtype('d')  # double-precision floating-point number
+
+#        self.data = np.fromfile(fblock,dtype='<f4',count=irecl)
+        self.data = np.fromfile(fblock,dtype='<f4',count=192)
+#        self.data = np.reshape(self.data,(self.qqx,self.qqy,self.qqz),order='F')	
+#        print(self.data)
+        
+        fblock.close()
+
+    def dt(self):
+        return self.data
+        
+    def eh(self):
+        for i in range(self.qqx):
+            eh = np.sum(self.data[i][:][:])/(self.qqy*self.qqz)
+        return eh 
+
+    def test(self):
+        return self.data
