@@ -200,7 +200,7 @@ class PROMPI_blockdat:
         fblock = open(filename,'rb')
 
         # offset read pointer (argument offset is a byte count)         
-        fblock.seek(dstart)
+        fblock.seek(dstart) 
 
 # https://docs.scipy.org/doc/numpy-1.13.0/reference/arrays.dtypes.html#arrays-dtypes-constructing
         
