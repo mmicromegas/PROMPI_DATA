@@ -638,5 +638,5 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
         plt.show(block=False)
 #        text(9.,1.e6,r"ob",fontsize=42,color='k')
 
-#        savefig(data_prefix+'nuclear_energy_gen.eps')
+        savefig('RESULTS/oburnini_nuclear_energy_gen.png')
     
