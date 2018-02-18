@@ -500,7 +500,7 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
     def PlotNucEnergyGen(self,xbl,xbr):
         """Plot nuclear reaction timescales"""
 
-        rc = np.asarray(self.data['xzn0'])/1.e8
+        rc = np.asarray(self.data['xzn0'])
         tt = self.data['tt']
         dd = self.data['dd']
 
@@ -523,6 +523,7 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
         t9 = tt/1.e9 
 #+ 4.e-2*self.eht_tt[:,tt]/1.e9
 
+        # rate coefficients from netsu (source cf88)
 
         cl = self.GETRATEcoeff(reaction='ne20_to_he4_o16_rv')
         rate_ne20_alpha_gamma = exp(cl[0] + cl[1]*(t9**(-1.)) + cl[2]*(t9**(-1./3.)) + cl[3]*(t9**(1./3.)) + cl[4]*t9 + cl[5]*(t9**(5./3.)) + cl[6]*np.log(t9))
@@ -553,6 +554,7 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
         rate_c12_c12_achannel_r =  exp(cl[0] + cl[1]*(t9**(-1.)) + cl[2]*(t9**(-1./3.)) + cl[3]*(t9**(1./3.)) + cl[4]*t9 + cl[5]*(t9**(5./3.)) + cl[6]*np.log(t9))
 
 
+        # ANALYTIC EXPRESSIONS Caughlan & Fowler 1988
 
         t9a = t9/(1.+0.0396*t9)
         c_tmp1 = (4.27e26)*(t9a**(5./6.))
@@ -567,6 +569,7 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
         o_c_tmp2 = -0.629*(t9**(2./3.))
         o_c_tmp3 = -0.445*(t9**(4./3.))
         o_c_tmp4 = +0.0103*(t9**2.)
+        
         rate_o16_o16 = o_tmp1*np.exp(o_c_tmp1 + o_c_tmp2 + o_c_tmp3 + o_c_tmp4)
         
         n_tmp1 = 4.11e11/(t9**(2./3.))
@@ -586,14 +589,11 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
         c1_si28 = 1.8e28
 
 
-        
-        
         yc12sq  = (xc12/12.)**2. 
         yo16sq  = (xo16/16.)**2.
         yne20sq = (xne20/20.)**2.
     
         yo16  = xo16/16.
-
 
         lag = (3.e-3)*(t9**(10.5))
         lox = (2.8e-12)*(t9/2.)**33.
@@ -617,13 +617,21 @@ class PROMPI_bgr(prd.PROMPI_ransdat,object):
         plt.semilogy(rc,en_ne20,label=r"$\dot{\epsilon}_{\rm nuc}$ (Ne$^{20}$)")
         plt.semilogy(rc,en_si28,label=r"$\dot{\epsilon}_{\rm nuc}$ (Si$^{28}$)")
         plt.semilogy(rc,en_c12+en_o16+en_ne20+en_si28,label='total',color='k')
-        plt.semilogy(rc,enuc1,color='m',linestyle='--',label='nuc d')
-        plt.semilogy(rc,enuc2,color='r',linestyle='--',label='-neutrinos')		
-#        plt.semilogy(rc,enuc1+enuc2,color='b',linestyle='--',label='nuc+neutrinos')	
-		
-        plt.legend(loc=1,prop={'size':13})
 
-        plt.ylabel(r"$\dot{\epsilon}_{\rm nuc}$ \ (erg g$^{-1}$ s$^{-1}$)")
+
+#        plt.semilogy(rc,en_c12_acf88,label=r"$\dot{\epsilon}_{\rm nuc}$ (C$^{12}$)")
+#        plt.semilogy(rc,en_o16_acf88,label=r"$\dot{\epsilon}_{\rm nuc}$ (O$^{16}$)")
+#        plt.semilogy(rc,en_ne20_acf88,label=r"$\dot{\epsilon}_{\rm nuc}$ (Ne$^{20}$)")
+#        plt.semilogy(rc,en_si28_acf88,label=r"$\dot{\epsilon}_{\rm nuc}$ (Si$^{28}$)")
+#        plt.semilogy(rc,en_c12_acf88+en_o16_acf88+en_ne20_acf88+en_si28_acf88,label='total',color='k')
+
+        plt.semilogy(rc,enuc1,color='m',linestyle='--',label='nuc code')
+        plt.semilogy(rc,enuc2,color='r',linestyle='--',label='-neut code')		
+        plt.semilogy(rc,enuc1-enuc2,color='b',linestyle='--',label='nuc+neut code')	
+		
+        plt.legend(loc=1,prop={'size':8})
+
+        plt.ylabel(r"$\dot{\epsilon}_{\rm nuc}$ (erg g$^{-1}$ s$^{-1}$)")
         plt.xlabel('r ($10^8$ cm)')
 
         axvline(x=5.65,color='k',linewidth=1)
