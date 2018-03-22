@@ -12,7 +12,7 @@ eht_data = 'EHT.npy'
 intc = 1
 
 # CHOOSE XNUCID
-inuc = '0005'
+inuc = '0008'
 
 # LIMIT GRID
 xbl = 3.72e8

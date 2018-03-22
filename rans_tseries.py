@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 	   
 datadir = './DATA/'
 dataout = 'tseries_ransdat'
-trange = [0.0 ,0.7]
-tavg = 0.1
+trange = [0.0 ,0.2]
+tavg = 0.05
 
 ransdat = [file for file in os.listdir(datadir) if "ransdat" in file]
 ransdat = [file.replace(file,datadir+file) for file in ransdat]	
