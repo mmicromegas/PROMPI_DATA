@@ -9,13 +9,6 @@ class CALCULUS:
     def __init__(self,filename):
         pass
 
-
-    def grad(self):
-        pass
-		
-    def div(self):
-        pass
-
     def deriv(self,f,x):
         """ Compute numerical derivation using 3-point Lagrangian """ 
         """ interpolation (inspired by IDL function deriv) """

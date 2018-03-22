@@ -1,122 +1,97 @@
 import PROMPI_data as prd
 import numpy as np
 import matplotlib.pyplot as plt
+import CALCULUS as calc
 
 class PROMPI_xnu:
 
-    def __init__(self,filename):
+    def __init__(self,filename,inuc,intc):
+	
+        # load data to structured array
+        eht = np.load(filename)	
+
+        self.xzn0        = eht.item().get('rr') 
+        self.eht_dd      = eht.item().get('dd')[intc]
+        self.eht_ddxi    = eht.item().get('ddx'+inuc)[intc]
+#        self.eht_ddux    = eht['ddux'][intc]
+#        self.eht_ddxiux  = eht['ddx'+inuc+'ux']
+#        self.eht_ddxidot = eht['ddx'+inuc+'dot']	
+	
+    def plot_Xrho(self,xbl,xbr,inuc):
+        """Plot Xrho stratification in the model""" 
+
+        # convert nuc ID to string
+        xnucid = str(inuc)
+		
+        # load x GRID
+        grd1 = self.xzn0
+		
+		# load DATA to plot
+        plt1 = self.eht_ddxi
+		
+		# calculate INDICES for grid boundaries 
+        idxl, idxr = self.idx_bndry(xbl,xbr)
+		
+		# initiate FIGURE
+        fig, ax1 = plt.subplots(figsize=(7,6))
+		
+		# limit x/y axis
+        ax1.axis([xbl,xbr,np.min(plt1[idxl:idxr]),np.max(plt1[idxl:idxr])])
+		
+		# plot DATA 
+        # ax1.title(xnucid)
+        ax1.plot(grd1,plt1,color='b',label = r'$\overline{\rho} \widetilde{X}$')
+
+        # define and show x/y LABELS
+        xlabel = r"r (cm)"
+        ylabel = r"$\overline{\rho} \widetilde{X}$ (g cm$^{-3}$"
+        ax1.set_xlabel(xlabel)
+        ax1.set_ylabel(ylabel)
+		
+        # show LEGEND
+        ax1.legend(loc=7,prop={'size':18})
+
+        # display PLOT
+        plt.show(block=False)
+
+        # save PLOT
+        # ax1.savefig(data_prefix+'mean_rhoX_'+xnucid+'.png')
+		
+    def plot_Xtransport_equation(self,xbl,xbr):
         pass
+		
+    def plot_Xflux(self,xbl,xbr):
+        pass
+		
+    def plot_Xflux_equation(self,xbl,xbr):
+        pass
+
+    def plot_Xvariance(self,xbl,xbr):
+        pass
+		
+    def plot_Xvariance_equation(self,xbl,xbr):
+        pass		
+		
+    def plot_X_Ediffusivity(self,xbl,xbr):
+    # Eulerian diffusivity
+        pass
+		
+    def plot_X_Ldiffusivity(self,xbl,xbr):
+    # Lagrangian diffusivity
+        pass
+				
+    def gauss(x, *p): 
+    # Define model function to be used to fit to the data above:
+        A, mu, sigma = p
+        return A*np.exp(-(x-mu)**2/(2.*sigma**2))		
+	
+    def idx_bndry(self,xbl,xbr):
+    # calculate indices of grid boundaries 
+        rr = np.asarray(self.xzn0)
+        xlm = np.abs(rr-xbl)
+        xrm = np.abs(rr-xbr)
+        idxl = int(np.where(xlm==xlm.min())[0])
+        idxr = int(np.where(xrm==xrm.min())[0])	
+        return idxl,idxr
 	
 	
-
-	
-    def ranslist(self):
-        return np.asarray(self.xzn0)
-
-    def ransdict(self):
-        print self.eh.keys()
-		
-    def sterad(self):
-        pass
-		
-    def grad(self):
-        pass
-		
-    def div(self):
-        pass
-
-    def deriv(self,f,x):
-        """Compute numerical derivation using 3-point Lagrangian interpolation (inspired by IDL function deriv) """
-        """Procedure Hildebrand, Introduction to Numerical Analysis, Mc Graw Hill, 1956 """
-        """df/dx = f0*(2x-x1-x2)/(x01*x02)+f1*(x-x0-x2)/(x10*x12)+f2*(2x-x0-x1)/(x20*x21) """
-        """Where: x01 = x0-x1, x02 = x0-x2, x12 = x1-x2, etc. """
-
-
-        x12 = x - np.roll(x,-1)             #x1 - x2
-        x01 = np.roll(x,1) - x              #x0 - x1
-        x02 = np.roll(x,1) - np.roll(x,-1)  #x0 - x2
-
-        deriv = np.zeros(f.size)
-        
-
-#       middle points
-        deriv = np.roll(f,1)*(x12/(x01*x02)) + f*(1./x12 - 1./x01) - np.roll(f,-1)*(x01/(x02*x12))
-
-#       first point 
-        deriv[0] = f[0] * (x01[1]+x02[1])/(x01[1]*x02[1]) - f[1] * x02[1]/(x01[1]*x12[1]) + f[2] * x01[1]/(x02[1]*x12[1])
-
-#       last point
-        n  = x.size
-        n2 = x.size - 1 - 2        
-        deriv[x.size -1] = -f[n-3] * x12[n2]/(x01[n2]*x02[n2]) + f[n-2] * x02[n2]/(x01[n2]*x12[n2]) - f[n-1] * (x02[n2]+x12[n2])/(x02[n2]*x12[n2])
-
-        return deriv
-
-    def Div(self,f):
-        """Compute the divergence of 'f'"""
-      
-        divf = np.zeros(f.shape)
-
-        rc = self.xzn0
-        f = f*rc**2
-        divf = self.deriv(f,rc)/rc**2
-
-        return divf
-
-    def Grad(self,q):
-        """Compute gradient"""
-        rc = self.xzn0
-        grad = np.zeros(q.shape)
-        grad = self.deriv(q,rc)
-        return grad
-
-    def dt(self,q,tt):
-
-        rc = self.xzn0
-        timec = self.timec
-
-        tmp = np.zeros(q.shape)
-        dt = np.zeros(rc.shape)
-
-        for i in range(0,self.xzn0.size): tmp[i,:] = self.deriv(q[i,:],timec)
-        dt[:] = tmp[:,tt]
-        return dt
-
-    def dr(self,q,tt):
-
-        rc = self.xzn0
-
-        dr = np.zeros(self.nx)
-        dr[:] = self.deriv(q[:,tt],rc)
-        return dr
-
-    def FavreAdvDer(self,q,tt):
-        """Compute Favre advective derivative \fht{D_t} (.) = \partial_t (.) + \fht{u_n} \partial_n (.) """
-        rc = self.xzn0
-        timec = self.timec
-
-        tmp = np.zeros(q.shape)
-        for i in range(1,self.xzn0.size): tmp[i,:] = self.deriv(q[i,:],timec)
-        FavreAdvDer = np.zeros(rc.shape)
-        FavreAdvDer[:] = tmp[:,tt] + self.fht_ux[:,tt]*self.deriv(q[:,tt],rc)
-        return FavreAdvDer
-
-    def ReyAdvDer(self,q,tt):
-        """Compute Reynolds advective derivative \eht{D_t} (.) = \partial_t (.) + \eht{u_n} \partial_n (.) """
-        rc = self.xzn0
-        timec = self.timec
-
-        tmp = np.zeros(q.shape)
-        for i in range(1,self.xzn0.size): tmp[i,:] = self.deriv(q[i,:],timec)
-        ReyAdvDer = np.zeros(rc.shape)
-        ReyAdvDer[:] = tmp[:,tt] + self.eht_ux[:,tt]*self.deriv(q[:,tt],rc)
-        return ReyAdvDer
-		
-    def CorrectMean_ux(self,tt):
-
-        dmdt = self.dt(self.eht_mm,tt) 
-        vexp = -dmdt/(4.*np.pi*self.xzn0*self.xzn0*self.eht_dd[:,tt])
-
-        self.fht_ux[:,tt] = vexp[:]
-        self.eht_ux[:,tt] = self.fht_ux[:,tt] - self.eht_ax[:,tt]
-		

@@ -6,14 +6,15 @@ import matplotlib.pyplot as plt
 	   
 datadir = './DATA/'
 dataout = 'tseries_ransdat'
-trange = [0.0 ,0.023]
-tavg = 0.001
+trange = [0.0 ,0.7]
+tavg = 0.1
 
 ransdat = [file for file in os.listdir(datadir) if "ransdat" in file]
 ransdat = [file.replace(file,datadir+file) for file in ransdat]	
 
 filename = ransdat[0]
 ts = pt.PROMPI_ransdat(filename)
+
 qqx = ts.rans_qqx()
 ransl = ts.rans_list()
 		
@@ -94,30 +95,57 @@ for s in ts.ransl:
     field = {str(s) : tmp2}  		
     eht.update(field)     
 
-print(ts.ransl)
+# store radial grid 
+	
+grid = {'rr' : ts.rans()['xzn0']}
+eht.update(grid)
 
-fld = 'enuc1'
-a = eht[fld]
-intc = ntc - 1
-b = a[:][intc]
+ntc = {'ntc': ntc}
+eht.update(ntc)
+
+# STORE TIME-AVERAGED DATA i.e the EHT dictionary 
+
+np.save('EHT.npy',eht)
+
+# END
+
+# OBSOLETE CODE 
+	
+#print(ts.ransl)
+
+#fld = 'enuc1'
+#a = eht[fld]
+#intc = ntc - 1
+#b = a[:][intc]
+#xx = eht['rr']
 
 #print(b)
 
-fig, ax1 = plt.subplots(figsize=(7,6))
+#fig, ax1 = plt.subplots(figsize=(7,6))
 
-xbl = 3.72e8
-xbr = 9.8e8
+#for i in range(nt):
+#    filename = ransdat[i]
+#    ts = pt.PROMPI_ransdat(filename)
+#    plt.plot(xx,ts.rans()[fld])
+
+#ax1.plot(xx,b,color='k')
+
+
 
 #fig, ax1 = plt.subplots(figsize=(7,6))
 
-for i in range(nt):
-    filename = ransdat[i]
-    ts = pt.PROMPI_ransdat(filename)
-    plt.plot(ts.rans()[fld])
+#intc = ntc - 1
+#inuc = '0005'
 
-#ax1.plot(b,color='k')
+#eht_dd   = eht['dd'][intc]
+#eht_ddxi = eht['ddx'+inuc][intc]
+#eht_ddux = eht['ddux'][intc]
+#eht_ddxiux = eht['ddx'+inuc+'ux']
+#eht_ddxidot = eht['ddx'+inuc+'dot']
+
+#rc = self.xzn0/1.e8
 	
-plt.show(block=False)
+#plt.show(block=False)
 	
 
 
