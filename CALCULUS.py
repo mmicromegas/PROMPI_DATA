@@ -66,12 +66,6 @@ class CALCULUS:
         dt[:] = tmp[tt,:]
         return dt
 
-    def dr(self,q,rc,tt):
-
-        dr = np.zeros(self.nx)
-        dr[:] = self.deriv(q[tt,:],rc)
-        return dr
-
     def FavreAdvDer(self,q,rc,timec,tt):
         """Compute Favre advective derivative \fht{D_t} (.) = \partial_t (.) + \fht{u_n} \partial_n (.) """
 

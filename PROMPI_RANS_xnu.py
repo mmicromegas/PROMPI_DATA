@@ -13,37 +13,63 @@ class PROMPI_xnu(calc.CALCULUS,object):
         self.intc = intc
 		
         # assign data and convert it to numpy array
-        self.timec       = eht.item().get('timec')[intc] 
-        self.xzn0        = np.asarray(eht.item().get('rr')) 
-        self.eht_dd      = np.asarray(eht.item().get('dd')[intc])
-        self.eht_ddxi    = np.asarray(eht.item().get('ddx'+inuc)[intc])
-        self.eht_ddux    = np.asarray(eht.item().get('ddux')[intc])
-        self.eht_ddxiux  = np.asarray(eht.item().get('ddx'+inuc+'ux')[intc])
-        self.eht_ddxidot = np.asarray(eht.item().get('ddx'+inuc+'dot')[intc])	
-        self.eht_ddxisq  = np.asarray(eht.item().get('ddx'+inuc+'sq')[intc])
+        self.timec     = eht.item().get('timec')[intc] 
+        self.xzn0      = np.asarray(eht.item().get('rr')) 
+        self.dd        = np.asarray(eht.item().get('dd')[intc])
+        self.ddxi      = np.asarray(eht.item().get('ddx'+inuc)[intc])
+        self.ddux      = np.asarray(eht.item().get('ddux')[intc])
+        self.ddxiux    = np.asarray(eht.item().get('ddx'+inuc+'ux')[intc])
+        self.ddxidot   = np.asarray(eht.item().get('ddx'+inuc+'dot')[intc])	
+        self.ddxisq    = np.asarray(eht.item().get('ddx'+inuc+'sq')[intc])
+        self.ddxisqux  = np.asarray(eht.item().get('ddx'+inuc+'squx')[intc])
+        self.ddxixidot = np.asarray(eht.item().get('ddx'+inuc+'x'+inuc+'dot')[intc]) 		
 		
         # store time series for time derivatives
         self.t_timec       = eht.item().get('timec') 
-        self.t_eht_ddxi    = np.asarray(eht.item().get('ddx'+inuc))		
-        self.t_eht_ddxisq  = np.asarray(eht.item().get('ddx'+inuc+'sq'))
+        self.t_dd      = eht.item().get('dd') 
+        self.t_ddxi    = np.asarray(eht.item().get('ddx'+inuc))		
+        self.t_ddxisq  = np.asarray(eht.item().get('ddx'+inuc+'sq'))
 		
         #######################
         # Xi TRANSPORT EQUATION 
 		
         # LHS dq/dt 		
-        self.dtddxi = self.dt(self.t_eht_ddxi,self.xzn0,self.t_timec,intc)
+        self.dtddxi = self.dt(self.t_ddxi,self.xzn0,self.t_timec,intc)
         # LHS div(ddXiux)
-        self.divddxiux = self.Div(self.eht_ddxi*self.eht_ddux/self.eht_dd,self.xzn0)
+        self.divddxiux = self.Div(self.ddxi*self.ddux/self.dd,self.xzn0)
 		
         # RHS div(fxi) 
-        self.divfxi = self.Div(self.eht_ddxiux - self.eht_ddxi*self.eht_ddux/self.eht_dd,self.xzn0) 
+        self.divfxi = self.Div(self.ddxiux - self.ddxi*self.ddux/self.dd,self.xzn0) 
         # RHS ddXidot 
-        self.ddXidot = self.eht_ddxidot 
+        self.ddXidot = self.ddxidot 
         # res
         self.resXiTransport = - self.dtddxi - self.divddxiux - self.divfxi + self.ddXidot
 		
         # END Xi TRANSPORT EQUATION
         #######################
+		
+        ######################
+        # Xi VARIANCE EQUATION 
+ 
+        self.t_ddsigmai = self.t_ddxisq -self.t_ddxi*self.t_ddxi/self.t_dd
+        self.dtddsigmai = self.dt(self.t_ddsigmai,self.xzn0,self.t_timec,intc)
+		
+        self.divdduxsigmai = self.Div((self.ddxisq -self.ddxi*self.ddxi/self.dd)*(self.ddux/self.dd),self.xzn0)
+        self.divfxir = self.Div(self.ddxisqux/self.dd - \
+                       2.*self.ddxiux*self.ddxi/self.dd  - \
+                       self.ddxisq*self.ddux/self.dd + \
+                       2.*self.ddxi*self.ddxi*self.ddux/(self.dd*self.dd),self.xzn0)
+        self.fxigradi = 2.*self.dd*(self.ddxiux/self.dd - self.ddxi/(self.dd*self.dd))*self.Grad(self.ddxi/self.dd,self.xzn0)
+        self.xifddxidot = 2.*(self.ddxixidot - (self.ddxi/self.dd)*self.ddxidot)
+	
+        # res
+        self.resXiVariance = - self.dtddsigmai - self.divdduxsigmai - \
+                             self.divfxir - self.fxigradi + self.xifddxidot
+	
+        ######################
+        # Xi VARIANCE EQUATION 		
+		
+		
 		
     def plot_Xrho(self,xbl,xbr,inuc,data_prefix):
         """Plot Xrho stratification in the model""" 
@@ -55,7 +81,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
         grd1 = self.xzn0
 	
         # load DATA to plot
-        plt1 = self.eht_ddxi
+        plt1 = self.ddxi
 		
         # calculate INDICES for grid boundaries 
         idxl, idxr = self.idx_bndry(xbl,xbr)
@@ -89,7 +115,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
         plt.savefig('RESULTS/'+data_prefix+'mean_rhoX_'+xnucid+'.png')
 	
     def plot_Xtransport_equation(self,xbl,xbr,inuc,data_prefix):
-        """Plot Xrho stratification in the model""" 
+        """Plot Xrho transport equation in the model""" 
 
         # convert nuc ID to string
         xnucid = str(inuc)
@@ -140,7 +166,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
         plt.show(block=False)
 
         # save PLOT
-        plt.savefig('RESULTS/'+data_prefix+'mean_rhoX_'+xnucid+'.png')
+        plt.savefig('RESULTS/'+data_prefix+'mean_Xtransport_'+xnucid+'.png')
 
 		
     def plot_Xflux(self,xbl,xbr,inuc,data_prefix):
@@ -153,7 +179,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
         grd1 = self.xzn0		
 		
         # load and calculate DATA to plot
-        plt1 = self.eht_ddxiux - self.eht_ddxi*self.eht_ddux/self.eht_dd
+        plt1 = self.ddxiux - self.ddxi*self.ddux/self.dd
 		
         # calculate INDICES for grid boundaries 
         idxl, idxr = self.idx_bndry(xbl,xbr)
@@ -199,7 +225,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
         grd1 = self.xzn0
 		
         # load and calculate DATA to plot
-        plt1 = (self.eht_ddxisq - self.eht_ddxi*self.eht_ddxi/self.eht_dd)/self.eht_dd
+        plt1 = (self.ddxisq - self.ddxi*self.ddxi/self.dd)/self.dd
 		
         # calculate INDICES for grid boundaries 
         idxl, idxr = self.idx_bndry(xbl,xbr)
@@ -233,8 +259,62 @@ class PROMPI_xnu(calc.CALCULUS,object):
         plt.savefig('RESULTS/'+data_prefix+'mean_Xvariance_'+xnucid+'.png')
 		
 	
-    def plot_Xvariance_equation(self,xbl,xbr):
-        pass		
+    def plot_Xvariance_equation(self,xbl,xbr,inuc,data_prefix):
+        """Plot Xi variance equation in the model""" 
+
+        # convert nuc ID to string
+        xnucid = str(inuc)
+		
+        # load x GRID
+        grd1 = self.xzn0
+
+        lhs0 = - self.dtddsigmai
+        lhs1 = - self.divdduxsigmai
+		
+        rhs0 = - self.fxigradi
+        rhs1 = - self.divfxir
+        rhs2 = + self.xifddxidot
+		
+        res = - self.resXiVariance
+		
+        # calculate INDICES for grid boundaries 
+        idxl, idxr = self.idx_bndry(xbl,xbr)
+		
+        # create FIGURE
+        plt.figure(figsize=(7,6))
+		
+        # format AXIS, make sure it is exponential
+        plt.gca().yaxis.get_major_formatter().set_powerlimits((0,0))		
+		
+        # limit x/y axis by global min/max from all terms
+        minx = np.min([np.min(lhs0[idxl:idxr]),np.min(lhs1[idxl:idxr]),np.min(rhs0[idxl:idxr]),np.min(rhs1[idxl:idxr]),np.min(rhs2[idxl:idxr]),np.min(res[idxl:idxr])])
+        maxx = np.max([np.max(lhs0[idxl:idxr]),np.max(lhs1[idxl:idxr]),np.max(rhs0[idxl:idxr]),np.max(rhs1[idxl:idxr]),np.min(rhs2[idxl:idxr]),np.max(res[idxl:idxr])])
+        plt.axis([xbl,xbr,minx,maxx])
+		
+        # plot DATA 
+        plt.title('xnucid '+str(xnucid))
+        plt.plot(grd1,lhs0,color='cyan',label = r'$-\partial_t (\overline{\rho} \sigma)$')
+        plt.plot(grd1,lhs1,color='purple',label = r'$-\nabla_r (\overline{\rho} \widetilde{u}_r \sigma)$')		
+        plt.plot(grd1,rhs0,color='b',label=r'$-\nabla_r f^r$')
+        plt.plot(grd1,rhs1,color='g',label=r'$-2 f \partial_r \widetilde{X}$')
+        plt.plot(grd1,rhs2,color='r',label=r'$+2 \overline{\rho X^{,,} \dot{X}}$')		
+        plt.plot(grd1,res,color='k',linestyle='--',label='res')
+
+        # define and show x/y LABELS
+        setxlabel = r"r (cm)"
+        setylabel = r"g cm$^{-3}$ s$^{-1}$"
+        plt.xlabel(setxlabel)
+        plt.ylabel(setylabel)
+		
+        # show LEGEND
+        plt.legend(loc=1,prop={'size':12})
+
+        # display PLOT
+        plt.show(block=False)
+
+        # save PLOT
+        plt.savefig('RESULTS/'+data_prefix+'mean_Xvariance_'+xnucid+'.png')		
+		
 		
     def plot_X_Ediffusivity(self,xbl,xbr):
     # Eulerian diffusivity
