@@ -27,23 +27,23 @@ class PROMPI_xnu(calc.CALCULUS,object):
         self.t_eht_ddxi    = np.asarray(eht.item().get('ddx'+inuc))		
         self.t_eht_ddxisq  = np.asarray(eht.item().get('ddx'+inuc+'sq'))
 		
-		#######################
-		# Xi TRANSPORT EQUATION 
+        #######################
+        # Xi TRANSPORT EQUATION 
 		
         # LHS dq/dt 		
         self.dtddxi = self.dt(self.t_eht_ddxi,self.xzn0,self.t_timec,intc)
-		# LHS div(ddXiux)
+        # LHS div(ddXiux)
         self.divddxiux = self.Div(self.eht_ddxi*self.eht_ddux/self.eht_dd,self.xzn0)
 		
-		# RHS div(fxi) 
+        # RHS div(fxi) 
         self.divfxi = self.Div(self.eht_ddxiux - self.eht_ddxi*self.eht_ddux/self.eht_dd,self.xzn0) 
-		# RHS ddXidot 
+        # RHS ddXidot 
         self.ddXidot = self.eht_ddxidot 
-		# res
+        # res
         self.resXiTransport = - self.dtddxi - self.divddxiux - self.divfxi + self.ddXidot
 		
         # END Xi TRANSPORT EQUATION
-		#######################
+        #######################
 		
     def plot_Xrho(self,xbl,xbr,inuc,data_prefix):
         """Plot Xrho stratification in the model""" 
@@ -54,23 +54,22 @@ class PROMPI_xnu(calc.CALCULUS,object):
         # load x GRID
         grd1 = self.xzn0
 	
-		
-		# load DATA to plot
+        # load DATA to plot
         plt1 = self.eht_ddxi
 		
-		# calculate INDICES for grid boundaries 
+        # calculate INDICES for grid boundaries 
         idxl, idxr = self.idx_bndry(xbl,xbr)
 		
-		# create FIGURE
+        # create FIGURE
         plt.figure(figsize=(7,6))
 		
-		# format AXIS, make sure it is exponential
+        # format AXIS, make sure it is exponential
         plt.gca().yaxis.get_major_formatter().set_powerlimits((0,0))		
 		
-		# limit x/y axis
+        # limit x/y axis
         plt.axis([xbl,xbr,np.min(plt1[idxl:idxr]),np.max(plt1[idxl:idxr])])
 		
-		# plot DATA 
+        # plot DATA 
         plt.title('xnucid '+str(xnucid))
         plt.plot(grd1,plt1,color='brown',label = r'$\overline{\rho} \widetilde{X}$')
 
@@ -97,8 +96,6 @@ class PROMPI_xnu(calc.CALCULUS,object):
 		
         # load x GRID
         grd1 = self.xzn0
-		
-		# load DATA to plot
 
         lhs0 = - self.dtddxi
         lhs1 = - self.divddxiux 
@@ -108,21 +105,21 @@ class PROMPI_xnu(calc.CALCULUS,object):
 		
         res = - self.resXiTransport
 		
-		# calculate INDICES for grid boundaries 
+        # calculate INDICES for grid boundaries 
         idxl, idxr = self.idx_bndry(xbl,xbr)
 		
-		# create FIGURE
+        # create FIGURE
         plt.figure(figsize=(7,6))
 		
-		# format AXIS, make sure it is exponential
+        # format AXIS, make sure it is exponential
         plt.gca().yaxis.get_major_formatter().set_powerlimits((0,0))		
 		
-		# limit x/y axis by global min/max from all terms
+        # limit x/y axis by global min/max from all terms
         minx = np.min([np.min(lhs0[idxl:idxr]),np.min(lhs1[idxl:idxr]),np.min(rhs0[idxl:idxr]),np.min(rhs1[idxl:idxr]),np.min(res[idxl:idxr])])
         maxx = np.max([np.max(lhs0[idxl:idxr]),np.max(lhs1[idxl:idxr]),np.max(rhs0[idxl:idxr]),np.max(rhs1[idxl:idxr]),np.max(res[idxl:idxr])])
         plt.axis([xbl,xbr,minx,maxx])
 		
-		# plot DATA 
+        # plot DATA 
         plt.title('xnucid '+str(xnucid))
         plt.plot(grd1,lhs0,color='r',label = r'$-\partial_t (\overline{\rho} \widetilde{X})$')
         plt.plot(grd1,lhs1,color='cyan',label = r'$-\nabla_r (\overline{\rho} \widetilde{X} \widetilde{u}_r)$')		
@@ -155,22 +152,22 @@ class PROMPI_xnu(calc.CALCULUS,object):
         # load x GRID
         grd1 = self.xzn0		
 		
-		# load and calculate DATA to plot
+        # load and calculate DATA to plot
         plt1 = self.eht_ddxiux - self.eht_ddxi*self.eht_ddux/self.eht_dd
 		
-		# calculate INDICES for grid boundaries 
+        # calculate INDICES for grid boundaries 
         idxl, idxr = self.idx_bndry(xbl,xbr)
 		
-		# create FIGURE
+        # create FIGURE
         plt.figure(figsize=(7,6))
 		
-		# format Y AXIS, make sure it is exponential
+        # format Y AXIS, make sure it is exponential
         plt.gca().yaxis.get_major_formatter().set_powerlimits((0,0))
 		
-		# limit x/y axis
+        # limit x/y axis
         plt.axis([xbl,xbr,np.min(plt1[idxl:idxr]),np.max(plt1[idxl:idxr])])
 		
-		# plot DATA 
+        # plot DATA 
         plt.title('xnucid '+str(xnucid))
         plt.plot(grd1,plt1,color='k',label = r'f'+str(inuc))
 
@@ -201,22 +198,22 @@ class PROMPI_xnu(calc.CALCULUS,object):
         # load x GRID
         grd1 = self.xzn0
 		
-		# load and calculate DATA to plot
+        # load and calculate DATA to plot
         plt1 = (self.eht_ddxisq - self.eht_ddxi*self.eht_ddxi/self.eht_dd)/self.eht_dd
 		
-		# calculate INDICES for grid boundaries 
+        # calculate INDICES for grid boundaries 
         idxl, idxr = self.idx_bndry(xbl,xbr)
 		
-		# create FIGURE
+        # create FIGURE
         plt.figure(figsize=(7,6))
 		
-		# format Y AXIS, make sure it is exponential
+        # format Y AXIS, make sure it is exponential
         plt.gca().yaxis.get_major_formatter().set_powerlimits((0,0))
 		
-		# limit x/y axis
+        # limit x/y axis
         plt.axis([xbl,xbr,1.e-20,np.max(plt1[idxl:idxr])])
 		
-		# plot DATA 
+        # plot DATA 
         plt.title('xnucid '+str(xnucid))
         plt.semilogy(grd1,plt1,color='b',label = r'$\sigma$'+str(inuc))
 

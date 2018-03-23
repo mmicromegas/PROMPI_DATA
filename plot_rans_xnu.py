@@ -5,7 +5,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-# CHOOSE DATA SOURCE
+# CHOOSE DATA SOURCE 
 eht_data = 'tseries_ransdat.npy' 
 data_prefix = 'EHT_'
 
