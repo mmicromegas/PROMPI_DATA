@@ -133,25 +133,3 @@ np.save(dataout+'.npy',eht)
 
 #ax1.plot(xx,b,color='k')
 
-
-
-#fig, ax1 = plt.subplots(figsize=(7,6))
-
-#intc = ntc - 1
-#inuc = '0005'
-
-#eht_dd   = eht['dd'][intc]
-#eht_ddxi = eht['ddx'+inuc][intc]
-#eht_ddux = eht['ddux'][intc]
-#eht_ddxiux = eht['ddx'+inuc+'ux']
-#eht_ddxidot = eht['ddx'+inuc+'dot']
-
-#rc = self.xzn0/1.e8
-	
-#plt.show(block=False)
-	
-
-
-
-
- 
