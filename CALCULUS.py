@@ -17,8 +17,7 @@ class CALCULUS:
         """ df/dx = f0*(2x-x1-x2)/(x01*x02)+f1*(x-x0-x2)/(x10*x12)+ """
         """ f2*(2x-x0-x1)/(x20*x21) """
         """ Where: x01 = x0-x1, x02 = x0-x2, x12 = x1-x2, etc. """
-
-
+		
         x12 = x - np.roll(x,-1)             #x1 - x2
         x01 = np.roll(x,1) - x              #x0 - x1
         x02 = np.roll(x,1) - np.roll(x,-1)  #x0 - x2
@@ -39,53 +38,47 @@ class CALCULUS:
 
         return deriv
 
-    def Div(self,f):
+    def Div(self,f,rc):
         """Compute the divergence of 'f'"""
       
         divf = np.zeros(f.shape)
 
-        rc = self.xzn0
         f = f*rc**2
         divf = self.deriv(f,rc)/rc**2
 
         return divf
 
-    def Grad(self,q):
+    def Grad(self,q,rc):
         """Compute gradient"""
-        rc = self.xzn0
         grad = np.zeros(q.shape)
         grad = self.deriv(q,rc)
         return grad
 
-    def dt(self,q,tt):
+    def dt(self,q,rc,timec,tt):
 
-        rc = self.xzn0
-        timec = self.timec
+        #rc = self.xzn0
+        #timec = self.timec
 
         tmp = np.zeros(q.shape)
         dt = np.zeros(rc.shape)
 
-        for i in range(0,self.xzn0.size): tmp[i,:] = self.deriv(q[i,:],timec)
-        dt[:] = tmp[:,tt]
+        for i in range(0,rc.size): tmp[:,i] = self.deriv(q[:,i],timec)
+        dt[:] = tmp[tt,:]
         return dt
 
-    def dr(self,q,tt):
-
-        rc = self.xzn0
+    def dr(self,q,rc,tt):
 
         dr = np.zeros(self.nx)
-        dr[:] = self.deriv(q[:,tt],rc)
+        dr[:] = self.deriv(q[tt,:],rc)
         return dr
 
-    def FavreAdvDer(self,q,tt):
+    def FavreAdvDer(self,q,rc,timec,tt):
         """Compute Favre advective derivative \fht{D_t} (.) = \partial_t (.) + \fht{u_n} \partial_n (.) """
-        rc = self.xzn0
-        timec = self.timec
 
         tmp = np.zeros(q.shape)
-        for i in range(1,self.xzn0.size): tmp[i,:] = self.deriv(q[i,:],timec)
+        for i in range(1,self.xzn0.size): tmp[:,i] = self.deriv(q[:,i],timec)
         FavreAdvDer = np.zeros(rc.shape)
-        FavreAdvDer[:] = tmp[:,tt] + self.fht_ux[:,tt]*self.deriv(q[:,tt],rc)
+        FavreAdvDer[:] = tmp[tt,:] + self.fht_ux[tt,:]*self.deriv(q[tt,:],rc)
         return FavreAdvDer
 
     def ReyAdvDer(self,q,tt):
@@ -94,8 +87,8 @@ class CALCULUS:
         timec = self.timec
 
         tmp = np.zeros(q.shape)
-        for i in range(1,self.xzn0.size): tmp[i,:] = self.deriv(q[i,:],timec)
+        for i in range(1,self.xzn0.size): tmp[:,i] = self.deriv(q[:,i],timec)
         ReyAdvDer = np.zeros(rc.shape)
-        ReyAdvDer[:] = tmp[:,tt] + self.eht_ux[:,tt]*self.deriv(q[:,tt],rc)
+        ReyAdvDer[:] = tmp[tt,:] + self.eht_ux[tt,:]*self.deriv(q[tt,:],rc)
         return ReyAdvDer
 		

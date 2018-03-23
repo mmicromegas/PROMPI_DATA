@@ -103,9 +103,12 @@ eht.update(grid)
 ntc = {'ntc': ntc}
 eht.update(ntc)
 
+timec = {'timec': timec}
+eht.update(timec)
+
 # STORE TIME-AVERAGED DATA i.e the EHT dictionary 
 
-np.save('EHT.npy',eht)
+np.save(dataout+'.npy',eht)
 
 # END
 
