@@ -27,6 +27,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
         # store time series for time derivatives
         self.t_timec       = eht.item().get('timec') 
         self.t_dd      = eht.item().get('dd') 
+        self.t_ddux      = eht.item().get('ddux') 		
         self.t_ddxi    = np.asarray(eht.item().get('ddx'+inuc))		
         self.t_ddxisq  = np.asarray(eht.item().get('ddx'+inuc+'sq'))
 		
@@ -51,15 +52,20 @@ class PROMPI_xnu(calc.CALCULUS,object):
         ######################
         # Xi VARIANCE EQUATION 
  
+        # LHS dq/dt 
         self.t_ddsigmai = self.t_ddxisq -self.t_ddxi*self.t_ddxi/self.t_dd
         self.dtddsigmai = self.dt(self.t_ddsigmai,self.xzn0,self.t_timec,intc)
-		
+        # LHS div(dduxsigmai)
         self.divdduxsigmai = self.Div((self.ddxisq -self.ddxi*self.ddxi/self.dd)*(self.ddux/self.dd),self.xzn0)
+
+        # RHS div f^r
         self.divfxir = self.Div(self.ddxisqux/self.dd - \
                        2.*self.ddxiux*self.ddxi/self.dd  - \
                        self.ddxisq*self.ddux/self.dd + \
                        2.*self.ddxi*self.ddxi*self.ddux/(self.dd*self.dd),self.xzn0)
+        # RHS 2*f d_r Xi
         self.fxigradi = 2.*self.dd*(self.ddxiux/self.dd - self.ddxi/(self.dd*self.dd))*self.Grad(self.ddxi/self.dd,self.xzn0)
+        # RHS 2*dd xif xdoti
         self.xifddxidot = 2.*(self.ddxixidot - (self.ddxi/self.dd)*self.ddxidot)
 	
         # res
