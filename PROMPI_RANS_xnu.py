@@ -16,6 +16,14 @@ class PROMPI_xnu(calc.CALCULUS,object):
 		
         # assign data and convert it to numpy array
         self.timec     = eht.item().get('timec')[intc] 
+        print('####################################')
+        print('Plotting EHT for central time (in s): ',round(self.timec,1))
+        print('####################################')
+        self.tavg      = np.asarray(eht.item().get('tavg')) 
+        self.trange    = np.asarray(eht.item().get('trange')) 		
+        print('Averaging windows (in s): ',self.tavg)
+        print('Time range (in s from-to): ',round(self.trange[0],1),round(self.trange[1],1))		
+        print('####################################')					
         self.xzn0      = np.asarray(eht.item().get('rr')) 
         self.dd        = np.asarray(eht.item().get('dd')[intc])
         self.pp        = np.asarray(eht.item().get('pp')[intc])
@@ -149,8 +157,6 @@ class PROMPI_xnu(calc.CALCULUS,object):
                           (self.dduyuy - self.dduy*self.dduy/self.dd) + \
                           (self.dduzuz - self.dduz*self.dduz/self.dd))/self.dd 
         self.uconv = (2.*self.k)**0.5
- 
-        print(self.uconv)
  
         self.fi = self.ddxiux - self.ddxi*self.ddux/self.dd
         self.xi = self.ddxi/self.dd
@@ -387,13 +393,13 @@ class PROMPI_xnu(calc.CALCULUS,object):
         # plot DATA 
         plt.title('Xflux equation xnucid '+str(xnucid))
         plt.plot(grd1,lhs0,color='#8B3626',label = r'$-\partial_t f_i$')
-        plt.plot(grd1,lhs1,color='#FF7256',label = r'$-\nabla_r (\widetilde{u}_r f_i)$')		
+        plt.plot(grd1,lhs1,color='#FF7256',label = r'$-\nabla_r (\widetilde{u}_r f)$')		
         plt.plot(grd1,rhs0,color='b',label=r'$-\nabla_r f^r_i$')
-        plt.plot(grd1,rhs1,color='g',label=r'$-f_i \partial_r \widetilde{u}_r$')
-        plt.plot(grd1,rhs2,color='r',label=r'$-R_{rr} \partial_r \widetilde{X}_i$')	
-        plt.plot(grd1,rhs3,color='cyan',label=r'$-\overline{X^{,,}_i} \partial_r \overline{P} - \overline{X^{,,} \partial_r P^{,}}$')
-        plt.plot(grd1,rhs4,color='purple',label=r'$+\overline{u^{,,}_r \rho \dot{X}_i}$')
-        plt.plot(grd1,rhs5,color='yellow',label=r'$+G_i$')		
+        plt.plot(grd1,rhs1,color='g',label=r'$-f \partial_r \widetilde{u}_r$')
+        plt.plot(grd1,rhs2,color='r',label=r'$-R_{rr} \partial_r \widetilde{X}$')	
+        plt.plot(grd1,rhs3,color='cyan',label=r'$-\overline{X^{,,}} \partial_r \overline{P} - \overline{X^{,,} \partial_r P^{,}}$')
+        plt.plot(grd1,rhs4,color='purple',label=r'$+\overline{u^{,,}_r \rho \dot{X}}$')
+        plt.plot(grd1,rhs5,color='yellow',label=r'$+G$')		
         plt.plot(grd1,res,color='k',linestyle='--',label='res')
 
         # define and show x/y LABELS

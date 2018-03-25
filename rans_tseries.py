@@ -106,6 +106,12 @@ eht.update(ntc)
 timec = {'timec': timec}
 eht.update(timec)
 
+tavg = {'tavg': tavg}
+eht.update(tavg)
+
+trange = {'trange': trange}
+eht.update(trange)
+
 # STORE TIME-AVERAGED DATA i.e the EHT dictionary 
 
 np.save(dataout+'.npy',eht)

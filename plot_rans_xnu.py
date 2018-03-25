@@ -13,7 +13,7 @@ data_prefix = 'EHT_'
 intc = 3
 
 # CHOOSE XNUCID
-inuc = '0005'
+inuc = '0013'
 
 # IF LGRID = 1, LIMIT THE GRID (get rid of boundary noise)
 # IF LGRID = 0, DO NOT LIMIT THE GRID
@@ -31,22 +31,22 @@ RANSX = prx.PROMPI_xnu(eht_data,inuc,intc,LGRID,lc)
 
 # plot X transport equation 
 
-RANSX.plot_Xrho(xbl,xbr,inuc,data_prefix)
+#RANSX.plot_Xrho(xbl,xbr,inuc,data_prefix)
 RANSX.plot_Xtransport_equation(xbl,xbr,inuc,data_prefix)
 
 # plot X flux equation
 
-RANSX.plot_Xflux(xbl,xbr,inuc,data_prefix)
+#RANSX.plot_Xflux(xbl,xbr,inuc,data_prefix)
 RANSX.plot_Xflux_equation(xbl,xbr,inuc,data_prefix)
 
 # plot X variance equation
 
-RANSX.plot_Xvariance(xbl,xbr,inuc,data_prefix)
+#RANSX.plot_Xvariance(xbl,xbr,inuc,data_prefix)
 RANSX.plot_Xvariance_equation(xbl,xbr,inuc,data_prefix)
 
 # plot X diffusivity (Eulerian)
 
-RANSX.plot_X_Ediffusivity(xbl,xbr,inuc,data_prefix)
+#RANSX.plot_X_Ediffusivity(xbl,xbr,inuc,data_prefix)
 
 # AMSTERDAM
 
