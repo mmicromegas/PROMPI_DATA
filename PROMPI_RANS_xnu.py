@@ -46,7 +46,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
         self.ddxiuzuz  = np.asarray(eht.item().get('ddx'+inuc+'uzuz')[intc])		
 	
         print('####################################')
-        print('Plotting EHT for central time (in s): ',round(self.timec,1))
+        print('Plotting RANS for central time (in s): ',round(self.timec,1))
         print('####################################')	
         print('Averaging windows (in s): ',self.tavg)
         print('Time range (in s from-to): ',round(self.trange[0],1),round(self.trange[1],1))		
