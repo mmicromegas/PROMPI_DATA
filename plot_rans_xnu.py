@@ -7,13 +7,13 @@ warnings.filterwarnings("ignore")
 
 # CHOOSE DATA SOURCE 
 eht_data = 'tseries_ransdat.npy' 
-data_prefix = 'EHT_'
+data_prefix = 'tseries_ransdat'+'_'
 
 # CHOOSE CENTRAL TIME INDEX
 intc = 3
 
 # CHOOSE XNUCID
-inuc = '0013'
+inuc = '0003'
 
 # IF LGRID = 1, LIMIT THE GRID (get rid of boundary noise)
 # IF LGRID = 0, DO NOT LIMIT THE GRID

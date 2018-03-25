@@ -14,16 +14,10 @@ class PROMPI_xnu(calc.CALCULUS,object):
         self.intc = intc
         self.lc = lc
 		
-        # assign data and convert it to numpy array
+        # assign data and if needed convert to numpy array
         self.timec     = eht.item().get('timec')[intc] 
-        print('####################################')
-        print('Plotting EHT for central time (in s): ',round(self.timec,1))
-        print('####################################')
         self.tavg      = np.asarray(eht.item().get('tavg')) 
         self.trange    = np.asarray(eht.item().get('trange')) 		
-        print('Averaging windows (in s): ',self.tavg)
-        print('Time range (in s from-to): ',round(self.trange[0],1),round(self.trange[1],1))		
-        print('####################################')					
         self.xzn0      = np.asarray(eht.item().get('rr')) 
         self.dd        = np.asarray(eht.item().get('dd')[intc])
         self.pp        = np.asarray(eht.item().get('pp')[intc])
@@ -51,6 +45,12 @@ class PROMPI_xnu(calc.CALCULUS,object):
         self.ddxiuyuy  = np.asarray(eht.item().get('ddx'+inuc+'uyuy')[intc])
         self.ddxiuzuz  = np.asarray(eht.item().get('ddx'+inuc+'uzuz')[intc])		
 	
+        print('####################################')
+        print('Plotting EHT for central time (in s): ',round(self.timec,1))
+        print('####################################')	
+        print('Averaging windows (in s): ',self.tavg)
+        print('Time range (in s from-to): ',round(self.trange[0],1),round(self.trange[1],1))		
+        print('####################################')		
 		
         # store time series for time derivatives
         self.t_timec   = eht.item().get('timec') 
