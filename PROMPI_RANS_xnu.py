@@ -4,7 +4,7 @@ import CALCULUS as calc
 
 class PROMPI_xnu(calc.CALCULUS,object):
 
-    def __init__(self,filename,inuc,intc,LGRID):
+    def __init__(self,filename,inuc,intc,LGRID,lc):
         super(PROMPI_xnu,self).__init__(filename) 
 	
         # load data to structured array
@@ -12,6 +12,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
 		
         self.lgrid = LGRID
         self.intc = intc
+        self.lc = lc
 		
         # assign data and convert it to numpy array
         self.timec     = eht.item().get('timec')[intc] 
@@ -20,7 +21,12 @@ class PROMPI_xnu(calc.CALCULUS,object):
         self.pp        = np.asarray(eht.item().get('pp')[intc])
         self.ddux      = np.asarray(eht.item().get('ddux')[intc])
         self.dduy      = np.asarray(eht.item().get('dduy')[intc])
-        self.dduz      = np.asarray(eht.item().get('dduz')[intc])				
+        self.dduz      = np.asarray(eht.item().get('dduz')[intc])
+        self.ddhh      = np.asarray(eht.item().get('ddhh')[intc])	
+        self.ddcp      = np.asarray(eht.item().get('ddcp')[intc])
+        self.ddhhux    = np.asarray(eht.item().get('ddhhux')[intc])
+        self.ddttsq    = np.asarray(eht.item().get('ddttsq')[intc])
+        self.ddtt      = np.asarray(eht.item().get('ddtt')[intc])		
         self.dduxux    = np.asarray(eht.item().get('dduxux')[intc])
         self.dduyuy    = np.asarray(eht.item().get('dduyuy')[intc])
         self.dduzuz    = np.asarray(eht.item().get('dduzuz')[intc])
@@ -76,7 +82,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
         # LHS div(dduxsigmai)
         self.divdduxsigmai = self.Div((self.ddxisq -self.ddxi*self.ddxi/self.dd)*(self.ddux/self.dd),self.xzn0)
 
-        # RHS div f^r
+        # RHS div f^sigma
         self.divfxir = self.Div(self.ddxisqux/self.dd - \
                        2.*self.ddxiux*self.ddxi/self.dd  - \
                        self.ddxisq*self.ddux/self.dd + \
@@ -135,6 +141,40 @@ class PROMPI_xnu(calc.CALCULUS,object):
         # END Xi FLUX EQUATION 
         ######################	
 		
+        ################
+        # Xi DIFFUSIVITY 
+        ################
+
+        self.k = (1./2.)*((self.dduxux - self.ddux*self.ddux/self.dd) + \
+                          (self.dduyuy - self.dduy*self.dduy/self.dd) + \
+                          (self.dduzuz - self.dduz*self.dduz/self.dd))/self.dd 
+        self.uconv = (2.*self.k)**0.5
+ 
+        print(self.uconv)
+ 
+        self.fi = self.ddxiux - self.ddxi*self.ddux/self.dd
+        self.xi = self.ddxi/self.dd
+		
+        self.Deff = -self.fi/(self.dd*self.Grad(self.xi,self.xzn0))
+        self.Durms      = (1./3.)*self.uconv*self.lc
+
+        alphae = 1.
+        self.hp = - self.pp/self.Grad(self.pp,self.xzn0)
+        self.u_mlt = (self.ddhhux - self.ddhh*self.ddux/self.dd)/(alphae*(self.ddcp/self.dd)*(self.ddttsq-self.ddtt*self.ddtt)/self.dd)
+		
+        self.Dumlt1     = (1./3.)*self.u_mlt*self.lc
+
+        alpha = 1.5
+        self.Dumlt2 = (1./3.)*self.u_mlt*alpha*self.hp        
+
+        alpha = 1.6
+        self.Dumlt3 = (1./3.)*self.u_mlt*alpha*self.hp        
+
+        self.lagr = (4.*np.pi*(self.xzn0**2.)*self.dd)**2.				
+
+        ####################
+        # END Xi DIFFUSIVITY 
+        ####################
 		
     def plot_Xrho(self,xbl,xbr,inuc,data_prefix):
         """Plot Xrho stratification in the model""" 
@@ -164,7 +204,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
             plt.axis([grd1[0],grd1[-1],np.min(plt1[0:-1]),np.max(plt1[0:-1])])	
 		
         # plot DATA 
-        plt.title('xnucid '+str(xnucid))
+        plt.title('rhoX xnucid '+str(xnucid))
         plt.plot(grd1,plt1,color='brown',label = r'$\overline{\rho} \widetilde{X}$')
 
         # define and show x/y LABELS
@@ -219,7 +259,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
             plt.axis([grd1[0],grd1[-1],minx,maxx])
 		
         # plot DATA 
-        plt.title('xnucid '+str(xnucid))
+        plt.title('rhoX transport xnucid '+str(xnucid))
         plt.plot(grd1,lhs0,color='r',label = r'$-\partial_t (\overline{\rho} \widetilde{X})$')
         plt.plot(grd1,lhs1,color='cyan',label = r'$-\nabla_r (\overline{\rho} \widetilde{X} \widetilde{u}_r)$')		
         plt.plot(grd1,rhs0,color='b',label=r'$-\nabla_r f$')
@@ -270,7 +310,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
             plt.axis([grd1[0],grd1[-1],np.min(plt1[0:-1]),np.max(plt1[0:-1])])
 			
         # plot DATA 
-        plt.title('xnucid '+str(xnucid))
+        plt.title('Xflux xnucid '+str(xnucid))
         plt.plot(grd1,plt1,color='k',label = r'f'+str(inuc))
 
         # define and show x/y LABELS
@@ -345,7 +385,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
             plt.axis([grd1[0],grd1[-1],minx,maxx])		
 		
         # plot DATA 
-        plt.title('xnucid '+str(xnucid))
+        plt.title('Xflux equation xnucid '+str(xnucid))
         plt.plot(grd1,lhs0,color='#8B3626',label = r'$-\partial_t f_i$')
         plt.plot(grd1,lhs1,color='#FF7256',label = r'$-\nabla_r (\widetilde{u}_r f_i)$')		
         plt.plot(grd1,rhs0,color='b',label=r'$-\nabla_r f^r_i$')
@@ -400,7 +440,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
             plt.axis([grd1[0],grd1[-1],1.e-20,np.max(plt1[0:-1])])
 		
         # plot DATA 
-        plt.title('xnucid '+str(xnucid))
+        plt.title('Xvariane xnucid '+str(xnucid))
         plt.semilogy(grd1,plt1,color='b',label = r'$\sigma$'+str(inuc))
 
         # define and show x/y LABELS
@@ -458,7 +498,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
 		
 		
         # plot DATA 
-        plt.title('xnucid '+str(xnucid))
+        plt.title('Xvariance equation xnucid '+str(xnucid))
         plt.plot(grd1,lhs0,color='cyan',label = r'$-\partial_t (\overline{\rho} \sigma)$')
         plt.plot(grd1,lhs1,color='purple',label = r'$-\nabla_r (\overline{\rho} \widetilde{u}_r \sigma)$')		
         plt.plot(grd1,rhs0,color='b',label=r'$-\nabla_r f^\sigma$')
@@ -482,13 +522,62 @@ class PROMPI_xnu(calc.CALCULUS,object):
         plt.savefig('RESULTS/'+data_prefix+'mean_Xvariance_'+xnucid+'.png')		
 		
 		
-    def plot_X_Ediffusivity(self,xbl,xbr):
+    def plot_X_Ediffusivity(self,xbl,xbr,inuc,data_prefix):
     # Eulerian diffusivity
-        pass
+        # convert nuc ID to string
+        xnucid = str(inuc)
 		
-    def plot_X_Ldiffusivity(self,xbl,xbr):
-    # Lagrangian diffusivity
-        pass
+        # load x GRID
+        grd1 = self.xzn0
+		
+        term0 = self.Deff
+        term1 = self.Durms
+        term2 = self.Dumlt1
+        term3 = self.Dumlt2
+        term4 = self.Dumlt3		
+		
+        # calculate INDICES for grid boundaries 
+        idxl, idxr = self.idx_bndry(xbl,xbr)
+		
+        # create FIGURE
+        plt.figure(figsize=(7,6))
+		
+        # format AXIS, make sure it is exponential
+        plt.gca().yaxis.get_major_formatter().set_powerlimits((0,0))		
+		
+        # limit x/y axis by global min/max from all terms
+        if self.lgrid == 1:
+            minx = np.min([np.min(term0[idxl:idxr]),np.min(term1[idxl:idxr]),np.min(term2[idxl:idxr]),np.min(term3[idxl:idxr]),np.min(term4[idxl:idxr])])
+            maxx = np.max([np.max(term0[idxl:idxr]),np.max(term1[idxl:idxr]),np.max(term2[idxl:idxr]),np.max(term3[idxl:idxr]),np.min(term4[idxl:idxr])])
+            plt.axis([xbl,xbr,minx,maxx])
+        else:
+            minx = np.min([np.min(term0[0:-1]),np.min(term1[0:-1]),np.min(term2[0:-1]),np.min(term3[0:-1]),np.min(term4[0:-1])])
+            maxx = np.max([np.max(term0[0:-1]),np.max(term1[0:-1]),np.max(term2[0:-1]),np.max(term3[0:-1]),np.min(term4[0:-1])])
+            plt.axis([grd1[0],grd1[-1],minx,maxx])		
+
+        # plot DATA 		
+        plt.title(r'Eulerian Diff xnucid '+str(xnucid))
+        plt.plot(grd1,term0,label=r"$\sigma_{eff} = - f_i/(\overline{\rho} \ \partial_r \widetilde{X}_i)$")
+        plt.plot(grd1,term1,label=r"$\sigma_{urms} = (1/3) \ u_{rms} \ l_c $")
+        plt.plot(grd1,term2,label=r"$\sigma_{umlt} = + u_{mlt} \ l_c $")        
+        plt.plot(grd1,term3,label=r"$\sigma_{umlt} = + u_{mlt} \ \alpha_{mlt} \ H_P \ (\alpha_{mlt}$ = 1.5)")
+        plt.plot(grd1,term4,label=r"$\sigma_{umlt} = +(u_{mlt} \ \alpha_{mlt} \ H_P \ (\alpha_{mlt}$ = 1.6)") 
+
+        # define and show x/y LABELS
+        setxlabel = r"r (cm)"
+        setylabel = r"cm$^{-2}$ s$^{-1}$"
+        plt.xlabel(setxlabel)
+        plt.ylabel(setylabel)
+		
+        # show LEGEND
+        plt.legend(loc=1,prop={'size':12})
+
+        # display PLOT
+        plt.show(block=False)
+
+        # save PLOT
+        plt.savefig('RESULTS/'+data_prefix+'Ediff_'+xnucid+'.png')			
+			
 				
     def gauss(x, *p): 
     # Define model function to be used to fit to the data above:
