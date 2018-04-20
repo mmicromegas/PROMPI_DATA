@@ -46,33 +46,33 @@ class PROMPI_ransdat:
             
 #        print(self.ransl)
             
-        xznl = [] 
-        xzn0 = []
-        xznr = []
-        yznl = []
-        yzn0 = []
-        yznr = [] 
-        zznl = []
-        zzn0 = []
-        zznr = []
+        self.xznl = [] 
+        self.xzn0 = []
+        self.xznr = []
+        self.yznl = []
+        self.yzn0 = []
+        self.yznr = [] 
+        self.zznl = []
+        self.zzn0 = []
+        self.zznr = []
 			
         for line in range(self.qqx):
             line = fhead.readline().strip()        
-            xznl.append(float(line[8:22].strip()))
-            xzn0.append(float(line[23:38].strip()))
-            xznr.append(float(line[39:54].strip()))
+            self.xznl.append(float(line[8:22].strip()))
+            self.xzn0.append(float(line[23:38].strip()))
+            self.xznr.append(float(line[39:54].strip()))
 			
         for line in range(self.qqy):
             line = fhead.readline().strip()        
-            yznl.append(float(line[8:22].strip()))
-            yzn0.append(float(line[23:38].strip()))
-            yznr.append(float(line[39:54].strip()))	
+            self.yznl.append(float(line[8:22].strip()))
+            self.yzn0.append(float(line[23:38].strip()))
+            self.yznr.append(float(line[39:54].strip()))	
 
         for line in range(self.qqz):
             line = fhead.readline().strip()
-            zznl.append(float(line[8:22].strip()))
-            zzn0.append(float(line[23:38].strip()))
-            zznr.append(float(line[39:54].strip()))	
+            self.zznl.append(float(line[8:22].strip()))
+            self.zzn0.append(float(line[23:38].strip()))
+            self.zznr.append(float(line[39:54].strip()))	
 
         frans = open(filename,'rb')
         self.data = np.fromfile(frans)		
@@ -81,7 +81,7 @@ class PROMPI_ransdat:
 
         self.ransd = {}
 		
-        self.ransd = {"xzn0" : xzn0}
+        self.ransd = {"xzn0" : self.xzn0}
 		
         i = 0
 #        print(self.ransl)
@@ -106,6 +106,18 @@ class PROMPI_ransdat:
     def rans_qqx(self):
         return self.qqx
 
+    def rans_qqy(self):
+        return self.qqy
+
+    def rans_qqz(self):
+        return self.qqz		
+
+    def rans_xznl(self):
+        return self.xznl
+
+    def rans_xznr(self):
+        return self.xznr		
+		
     def ransdict(self):
         print self.eh.keys()
 		

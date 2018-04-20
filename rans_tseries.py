@@ -5,7 +5,7 @@ import sys
 import matplotlib.pyplot as plt       
 	   
 datadir = './DATA/'
-dataout = 'tseries_ransdat'
+dataout = 'tseries_ransout'
 trange = [0.0 ,0.2]
 tavg = 0.05
 
@@ -16,6 +16,12 @@ filename = ransdat[0]
 ts = pt.PROMPI_ransdat(filename)
 
 qqx = ts.rans_qqx()
+qqy = ts.rans_qqy()
+qqz = ts.rans_qqz()
+
+xznl = ts.rans_xznl()
+xznr = ts.rans_xznr()
+
 ransl = ts.rans_list()
 		
 nstep = []
@@ -100,8 +106,16 @@ for s in ts.ransl:
 grid = {'rr' : ts.rans()['xzn0']}
 eht.update(grid)
 
+xznl = {'xznl' : xznl}
+eht.update(xznl)
+
+xznr = {'xznr' : xznr}
+eht.update(xznr)
+
 ntc = {'ntc': ntc}
 eht.update(ntc)
+
+# store central times
 
 timec = {'timec': timec}
 eht.update(timec)
@@ -109,8 +123,22 @@ eht.update(timec)
 tavg = {'tavg': tavg}
 eht.update(tavg)
 
+# store time-averaging window
+
 trange = {'trange': trange}
 eht.update(trange)
+
+# store number of grid points in simulation
+
+nx = {'nx': qqx}
+eht.update(nx)
+
+ny = {'ny': qqy}
+eht.update(ny)
+
+nz = {'nz': qqz}
+eht.update(nz)
+
 
 # STORE TIME-AVERAGED DATA i.e the EHT dictionary 
 

@@ -1,13 +1,15 @@
 import PROMPI_data as prd
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 
 # class for calculus functions
 
 class CALCULUS:
 
-    def __init__(self,filename):
-        pass
+    def __init__(self,ig):
+        # geometry 
+        self.ig = ig
 
     def deriv(self,f,x):
         """ Compute numerical derivation using 3-point Lagrangian """ 
@@ -44,8 +46,14 @@ class CALCULUS:
         divf = np.zeros(f.shape)
 
         f = f*rc**2
-        divf = self.deriv(f,rc)/rc**2
-
+        if (self.ig == 2): 
+            divf = self.deriv(f,rc)/rc**2
+        elif (self.ig == 1):
+            divf = self.deriv(f,rc)
+        else:
+            print("ERROR: geometry not defined, use ig = 1 for CARTESIAN, ig = 2 for SPHERICAL, EXITING ...")
+            sys.exit()
+			
         return divf
 
     def Grad(self,q,rc):
@@ -58,31 +66,10 @@ class CALCULUS:
 
         #rc = self.xzn0
         #timec = self.timec
-
+		
         tmp = np.zeros(q.shape)
         dt = np.zeros(rc.shape)
 
         for i in range(0,rc.size): tmp[:,i] = self.deriv(q[:,i],timec)
         dt[:] = tmp[tt,:]
-        return dt
-
-    def FavreAdvDer(self,q,rc,timec,tt):
-        """Compute Favre advective derivative \fht{D_t} (.) = \partial_t (.) + \fht{u_n} \partial_n (.) """
-
-        tmp = np.zeros(q.shape)
-        for i in range(1,self.xzn0.size): tmp[:,i] = self.deriv(q[:,i],timec)
-        FavreAdvDer = np.zeros(rc.shape)
-        FavreAdvDer[:] = tmp[tt,:] + self.fht_ux[tt,:]*self.deriv(q[tt,:],rc)
-        return FavreAdvDer
-
-    def ReyAdvDer(self,q,tt):
-        """Compute Reynolds advective derivative \eht{D_t} (.) = \partial_t (.) + \eht{u_n} \partial_n (.) """
-        rc = self.xzn0
-        timec = self.timec
-
-        tmp = np.zeros(q.shape)
-        for i in range(1,self.xzn0.size): tmp[:,i] = self.deriv(q[:,i],timec)
-        ReyAdvDer = np.zeros(rc.shape)
-        ReyAdvDer[:] = tmp[tt,:] + self.eht_ux[tt,:]*self.deriv(q[tt,:],rc)
-        return ReyAdvDer
-		
+        return dt		

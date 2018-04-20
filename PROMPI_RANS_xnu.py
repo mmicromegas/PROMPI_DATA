@@ -4,8 +4,8 @@ import CALCULUS as calc
 
 class PROMPI_xnu(calc.CALCULUS,object):
 
-    def __init__(self,filename,inuc,intc,LGRID,lc):
-        super(PROMPI_xnu,self).__init__(filename) 
+    def __init__(self,filename,ig,inuc,intc,LGRID,lc):
+        super(PROMPI_xnu,self).__init__(ig) 
 	
         # load data to structured array
         eht = np.load(filename)	
@@ -53,12 +53,12 @@ class PROMPI_xnu(calc.CALCULUS,object):
         print('####################################')		
 		
         # store time series for time derivatives
-        self.t_timec   = eht.item().get('timec') 
-        self.t_dd      = eht.item().get('dd') 
-        self.t_ddux    = eht.item().get('ddux') 		
+        self.t_timec   = np.asarray(eht.item().get('timec')) 
+        self.t_dd      = np.asarray(eht.item().get('dd')) 
+        self.t_ddux    = np.asarray(eht.item().get('ddux')) 		
         self.t_ddxi    = np.asarray(eht.item().get('ddx'+inuc))		
         self.t_ddxisq  = np.asarray(eht.item().get('ddx'+inuc+'sq'))
-        self.t_ddxiux    = np.asarray(eht.item().get('ddx'+inuc+'ux'))
+        self.t_ddxiux  = np.asarray(eht.item().get('ddx'+inuc+'ux'))
 		
         #######################
         # Xi TRANSPORT EQUATION 
@@ -441,9 +441,9 @@ class PROMPI_xnu(calc.CALCULUS,object):
 		
         # limit x/y axis
         if self.lgrid == 1:
-            plt.axis([xbl,xbr,1.e-20,np.max(plt1[idxl:idxr])])
+            plt.axis([xbl,xbr,1.e-35,np.max(plt1[idxl:idxr])])
         else:
-            plt.axis([grd1[0],grd1[-1],1.e-20,np.max(plt1[0:-1])])
+            plt.axis([grd1[0],grd1[-1],1.e-35,np.max(plt1[0:-1])])
 		
         # plot DATA 
         plt.title('Xvariane xnucid '+str(xnucid))

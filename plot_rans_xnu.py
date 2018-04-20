@@ -6,14 +6,23 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # CHOOSE DATA SOURCE 
-eht_data = 'tseries_ransdat.npy' 
+eht_data = 'tseries_ransout.npy' 
+
+
+# CHOOSE PREFIX for figure names in RESULTS
 data_prefix = 'tseries_ransdat'+'_'
+
+# CHOOSE GEOMETRY OF THE SIMULATION
+# ig = 1 CARTESIAN x,y,z
+# ig = 2 SPHERICAL r,theta,phi
+
+ig = 2
 
 # CHOOSE CENTRAL TIME INDEX
 intc = 3
 
 # CHOOSE XNUCID
-inuc = '0003'
+inuc = '0004'
 
 # IF LGRID = 1, LIMIT THE GRID (get rid of boundary noise)
 # IF LGRID = 0, DO NOT LIMIT THE GRID
@@ -27,7 +36,7 @@ xbr = 9.8e8
 lc = 4.3e8
 
 # INSTANTIATE 
-RANSX = prx.PROMPI_xnu(eht_data,inuc,intc,LGRID,lc)
+RANSX = prx.PROMPI_xnu(eht_data,ig,inuc,intc,LGRID,lc)
 
 # plot X transport equation 
 
