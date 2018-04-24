@@ -35,17 +35,32 @@ lc = 4.3e8
 # INSTANTIATE 
 RANS = pre.PROMPI_eqs(eht_data,ig,intc,LGRID,lc)
 
-# plot continuity equation 
+# PLOT CONTINUITY EQUATION 
 
 RANS.plot_rho(xbl,xbr,data_prefix)
 RANS.plot_continuity_equation(xbl,xbr,data_prefix)
 RANS.plot_continuity_equation_bar(xbl,xbr,data_prefix)
 
-# plot TKE equation
+# PLOT UX MOMENTUM EQUATION
+
+RANS.plot_ux(xbl,xbr,data_prefix)
+RANS.plot_Rmomentum_equation(xbl,xbr,data_prefix)
+
+# PLOT TURBULENT KINETIC ENERGY EQUATION
 
 RANS.plot_tke(xbl,xbr,data_prefix)
 RANS.plot_tke_equation(xbl,xbr,data_prefix)
 
-# print properties of your simulation
+# PLOT INTERNAL ENERGY EQUATION
+
+RANS.plot_ei(xbl,xbr,data_prefix)
+RANS.plot_ei_equation(xbl,xbr,data_prefix)
+
+# PLOT ENTROPY EQUATION
+
+RANS.plot_ss(xbl,xbr,data_prefix)
+RANS.plot_ss_equation(xbl,xbr,data_prefix)
+
+# PRINT PROPERTIES OF YOUR SIMULATION
 
 RANS.properties(xbl,xbr,data_prefix)
