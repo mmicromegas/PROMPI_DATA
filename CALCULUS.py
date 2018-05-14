@@ -45,8 +45,8 @@ class CALCULUS:
       
         divf = np.zeros(f.shape)
 
-        f = f*rc**2
         if (self.ig == 2): 
+            f = f*rc**2
             divf = self.deriv(f,rc)/rc**2
         elif (self.ig == 1):
             divf = self.deriv(f,rc)

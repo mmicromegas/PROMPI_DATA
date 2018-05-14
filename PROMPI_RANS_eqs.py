@@ -2,20 +2,30 @@ import numpy as np
 from scipy import integrate
 import matplotlib.pyplot as plt
 import CALCULUS as calc
+import matplotlib as mpl
 
-# theoretical foundation https://arxiv.org/abs/1401.5176
+# Theoretical background https://arxiv.org/abs/1401.5176
+
+# Mocak, Meakin, Viallet, Arnett, 2014, Compressible Hydrodynamic Mean-Field #
+# Equations in Spherical Geometry and their Application to Turbulent Stellar #
+# Convection Data #
+
+# https://github.com/mmicromegas/PROMPI_DATA/blob/master/ransXtoPROMPI.pdf
 
 class PROMPI_eqs(calc.CALCULUS,object):
 
-    def __init__(self,filename,ig,intc,LGRID,lc):
+    def __init__(self,filename,ig,intc,LGRID,xbl,xbr):
         super(PROMPI_eqs,self).__init__(ig) 
 	
         # load data to structured array
         eht = np.load(filename)	
+
+#        mpl.style.use('classic')
 		
         self.lgrid = LGRID
         self.intc = intc
-        self.lc = lc
+        self.xbl = xbl
+        self.xbr = xbr
 		
         # assign data and if needed convert to numpy array
         self.nx      = eht.item().get('nx')
@@ -62,14 +72,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         self.gg        = np.asarray(eht.item().get('gg')[intc])	  
 
         # print(self.gg)		
-        # self.gam1      = np.asarray(eht.item().get('gam1')[intc])# gam1 not stored yet		
-	
-        print('####################################')
-        print('Plotting RANS for central time (in s): ',round(self.timec,1))
-        print('####################################')	
-        print('Averaging windows (in s): ',self.tavg)
-        print('Time range (in s from-to): ',round(self.trange[0],1),round(self.trange[1],1))		
-        print('####################################')		
+        # self.gam1      = np.asarray(eht.item().get('gam1')[intc])# gam1 not stored yet				
 
         # store time series for time derivatives
         self.t_timec   = np.asarray(eht.item().get('timec'))
@@ -91,6 +94,22 @@ class PROMPI_eqs(calc.CALCULUS,object):
         self.t_uzfuzf = self.t_dduzuz/self.t_dd - self.t_dduz*self.t_dduz/(self.t_dd*self.t_dd)
 		
         self.t_tke = 0.5*(self.t_uxfuxf+self.t_uyfuyf+self.t_uzfuzf)
+
+        self.dmdt = self.dt(self.t_mm,self.xzn0,self.t_timec,intc) 
+#        print(self.dmdt)
+#		self.vexp = -self.dmdt/(4.*np.pi*self.xzn0*self.xzn0*self.dd)
+
+#        self.fht_ux = self.vexp
+#        self.eht_ax = -self.ux + self.ddux/self.dd		
+#        self.eht_ux = self.fht_ux - self.eht_ax
+
+
+        print('####################################')
+        print('Plotting RANS for central time (in s): ',round(self.timec,1))
+        print('####################################')	
+        print('Averaging windows (in s): ',self.tavg)
+        print('Time range (in s from-to): ',round(self.trange[0],1),round(self.trange[1],1))		
+        print('####################################')
 		
         #####################
         # CONTINUITY EQUATION 
@@ -157,7 +176,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
 		
         # RHS 
         # warning ax = overline{+u''_x} 
-        self.ax = self.ux - self.ddux/self.dd		
+        self.ax = - self.ux + self.ddux/self.dd		
 		
         # buoyancy work
         self.wb = self.ax*self.Grad(self.pp,self.xzn0)
@@ -250,9 +269,76 @@ class PROMPI_eqs(calc.CALCULUS,object):
         # END ENTROPY EQUATION 
         ##############################			
 		
+        ##############################		
+        # PROPERTIES #
+        ##############################
+
+        rc = self.xzn0		
 		
+        # get inner and outer boundary of computational domain  
+        self.rin = self.xzn0[0]
+        self.rout = self.xzn0[self.nx-1]
+
+        # load TKE dissipation
+        self.diss = self.resTkeEquation
+
+        # calculate INDICES for grid boundaries 
+        if self.lgrid == 1:
+            idxl, idxr = self.idx_bndry(self.xbl,self.xbr)
+        else:
+            idxl = 0
+            idxr = self.nx-1			
 		
-    def plot_rho(self,xbl,xbr,data_prefix):
+        # Get rid of the numerical mess at inner boundary 
+        self.diss[0:idxl] = 0.
+        # Get rid of the numerical mess at outer boundary 
+        self.diss[idxr:self.nx] = 0.
+ 
+        self.diss_max = self.diss.max()
+        self.ind = np.where( (self.diss > 0.02*self.diss_max) )[0]
+
+        self.rinc  = rc[self.ind[0]]
+        self.routc = rc[self.ind[-1]]
+
+        self.ibot = self.ind[0]
+        self.itop = self.ind[-1]
+
+        # Reynolds number
+        self.nc = self.itop-self.ibot
+        self.Re = self.nc**(4./3.)		
+		
+        self.Vol = 4./3.*np.pi*(self.xznr**3-self.xznl**3)
+
+        # Calculate full dissipation rate and timescale
+        self.TKE = (self.dd*self.tke*self.Vol)[self.ind].sum()
+        self.epsD = (self.diss*self.Vol)[self.ind].sum()
+        self.tD = self.TKE/self.epsD
+
+        # RMS velocities
+        self.M=(self.dd*self.Vol)[self.ind].sum()
+        self.urms = np.sqrt(2.*self.TKE/self.M)
+
+        # Turnover timescale
+        self.tc = 2.*(self.routc-self.rinc)/self.urms
+
+        # Dissipation length-scale
+        self.ld = self.M*self.urms**3./self.epsD
+
+        # Total nuclear luminosity
+        self.tenuc = ((self.dd*(self.enuc1+self.enuc2))*self.Vol)[self.ind].sum()
+
+        # Pturb over Pgas (work in progress, no gam1 stored in rans_avg)
+        #cs2 = (self.gam1*self.pp)/self.dd
+        #ur2 = self.uxux
+        #pturb_o_pgas = (self.gam1*ur2/cs2)[ind].mean()
+    
+        # Calculate size of convection zone in pressure scale heights
+
+        self.hp = -self.pp/self.Grad(self.pp,self.xzn0)
+        self.pbot = self.pp[self.ibot]
+        self.lcz_vs_hp = np.log(self.pbot/self.pp[self.ibot:self.itop])		
+		
+    def plot_rho(self,data_prefix):
         """Plot rho stratification in the model""" 
 		
         # load x GRID
@@ -262,7 +348,8 @@ class PROMPI_eqs(calc.CALCULUS,object):
         plt1 = self.dd
 		
         # calculate INDICES for grid boundaries 
-        idxl, idxr = self.idx_bndry(xbl,xbr)
+        if self.lgrid == 1:
+            idxl, idxr = self.idx_bndry(self.xbl,self.xbr) 
 		
         # create FIGURE
         plt.figure(figsize=(7,6))
@@ -272,7 +359,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
 		
         # limit x/y axis
         if self.lgrid == 1:
-            plt.axis([xbl,xbr,np.min(plt1[idxl:idxr]),np.max(plt1[idxl:idxr])])
+            plt.axis([self.xbl,self.xbr,np.min(plt1[idxl:idxr]),np.max(plt1[idxl:idxr])])
         else:
             plt.axis([grd1[0],grd1[-1],np.min(plt1[0:-1]),np.max(plt1[0:-1])])	
 		
@@ -295,7 +382,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         # save PLOT
         plt.savefig('RESULTS/'+data_prefix+'mean_rho.png')
 	
-    def plot_continuity_equation(self,xbl,xbr,data_prefix):
+    def plot_continuity_equation(self,data_prefix):
         """Plot continuity equation in the model""" 
 		
         # load x GRID
@@ -309,7 +396,8 @@ class PROMPI_eqs(calc.CALCULUS,object):
         res = - self.resContEquation
 		
         # calculate INDICES for grid boundaries 
-        idxl, idxr = self.idx_bndry(xbl,xbr)
+        if self.lgrid == 1:
+            idxl, idxr = self.idx_bndry(self.xbl,self.xbr)	
 		
         # create FIGURE
         plt.figure(figsize=(7,6))
@@ -321,7 +409,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         if self.lgrid == 1:
             minx = np.min([np.min(lhs0[idxl:idxr]),np.min(lhs1[idxl:idxr]),np.min(rhs0[idxl:idxr]),np.min(res[idxl:idxr])])
             maxx = np.max([np.max(lhs0[idxl:idxr]),np.max(lhs1[idxl:idxr]),np.max(rhs0[idxl:idxr]),np.max(res[idxl:idxr])])
-            plt.axis([xbl,xbr,minx,maxx])
+            plt.axis([self.xbl,self.xbr,minx,maxx])
         else:
             minx = np.min([np.min(lhs0[0:-1]),np.min(lhs1[0:-1]),np.min(rhs0[0:-1]),np.min(res[0:-1])])
             maxx = np.max([np.max(lhs0[0:-1]),np.max(lhs1[0:-1]),np.max(rhs0[0:-1]),np.max(res[0:-1])])			
@@ -349,7 +437,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         # save PLOT
         plt.savefig('RESULTS/'+data_prefix+'continuity_eq.png')
 
-    def plot_continuity_equation_bar(self,xbl,xbr,data_prefix):
+    def plot_continuity_equation_bar(self,data_prefix):
         """Plot continuity equation in the model""" 
 		
         # load x GRID
@@ -361,7 +449,11 @@ class PROMPI_eqs(calc.CALCULUS,object):
         term4 = - self.resContEquation
 		
         # calculate INDICES for grid boundaries 
-        idxl, idxr = self.idx_bndry(xbl,xbr)
+        if self.lgrid == 1:
+            idxl, idxr = self.idx_bndry(self.xbl,self.xbr)
+        else:
+            idxl = 0
+            idxr = self.nx-1
 		
         term1_sel = term1[idxl:idxr]
         term2_sel = term2[idxl:idxr]
@@ -430,7 +522,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         # save PLOT
         plt.savefig('RESULTS/'+data_prefix+'continuity_eq_bar.png')
 	
-    def plot_ux(self,xbl,xbr,data_prefix):
+    def plot_ux(self,data_prefix):
         """Plot Favrian ux stratification in the model""" 
 		
         # load x GRID
@@ -438,9 +530,12 @@ class PROMPI_eqs(calc.CALCULUS,object):
 	
         # load DATA to plot
         plt1 = self.ddux/self.dd
+#        plt2 = self.eht_ux
+#        plt3 = self.vexp
 		
-        # calculate INDICES for grid boundaries 
-        idxl, idxr = self.idx_bndry(xbl,xbr)
+        # calculate INDICES for grid boundaries
+        if self.lgrid == 1:		
+            idxl, idxr = self.idx_bndry(self.xbl,self.xbr)
 		
         # create FIGURE
         plt.figure(figsize=(7,6))
@@ -450,13 +545,15 @@ class PROMPI_eqs(calc.CALCULUS,object):
 		
         # limit x/y axis
         if self.lgrid == 1:
-            plt.axis([xbl,xbr,np.min(plt1[idxl:idxr]),np.max(plt1[idxl:idxr])])
+            plt.axis([self.xbl,self.xbr,np.min(plt1[idxl:idxr]),np.max(plt1[idxl:idxr])])
         else:
             plt.axis([grd1[0],grd1[-1],np.min(plt1[0:-1]),np.max(plt1[0:-1])])	
 		
         # plot DATA 
         plt.title('ux')
         plt.plot(grd1,plt1,color='brown',label = r'$\widetilde{u}_x$')
+#        plt.plot(grd1,plt2,color='green',label = r'$\overline{u}_x$')
+#        plt.plot(grd1,plt1,color='red',label = r'$v_{exp}$')		
 
         # define and show x/y LABELS
         setxlabel = r"r (cm)"
@@ -473,7 +570,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         # save PLOT
         plt.savefig('RESULTS/'+data_prefix+'mean_ux.png')
 	
-    def plot_Rmomentum_equation(self,xbl,xbr,data_prefix):
+    def plot_Rmomentum_equation(self,data_prefix):
         """Plot continuity equation in the model""" 
 		
         # load x GRID
@@ -489,7 +586,8 @@ class PROMPI_eqs(calc.CALCULUS,object):
         res = - self.resResMomentumEquation
 		
         # calculate INDICES for grid boundaries 
-        idxl, idxr = self.idx_bndry(xbl,xbr)
+        if self.lgrid == 1:
+            idxl, idxr = self.idx_bndry(self.xbl,self.xbr)
 		
         # create FIGURE
         plt.figure(figsize=(7,6))
@@ -503,7 +601,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
 			np.min(rhs1[idxl:idxr]),np.min(rhs2[idxl:idxr]),np.min(res[idxl:idxr])])
             maxx = np.max([np.max(lhs0[idxl:idxr]),np.max(lhs1[idxl:idxr]),np.max(rhs0[idxl:idxr]),\
 			np.max(rhs1[idxl:idxr]),np.max(rhs2[idxl:idxr]),np.max(res[idxl:idxr])])
-            plt.axis([xbl,xbr,minx,maxx])
+            plt.axis([self.xbl,self.xbr,minx,maxx])
         else:
             minx = np.min([np.min(lhs0[0:-1]),np.min(lhs1[0:-1]),np.min(rhs0[0:-1]),np.min(rhs1[0:-1]),np.min(rhs2[0:-1]),np.min(res[0:-1])])
             maxx = np.max([np.max(lhs0[0:-1]),np.max(lhs1[0:-1]),np.max(rhs0[0:-1]),np.max(rhs1[0:-1]),np.max(rhs2[0:-1]),np.max(res[0:-1])])			
@@ -533,7 +631,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         # save PLOT
         plt.savefig('RESULTS/'+data_prefix+'rmomentum_eq.png')	
 		
-    def plot_tke(self,xbl,xbr,data_prefix):
+    def plot_tke(self,data_prefix):
         """Plot turbulent kinetic energy stratification in the model""" 
 		
         # load x GRID
@@ -543,7 +641,8 @@ class PROMPI_eqs(calc.CALCULUS,object):
         plt1 = self.tke
 		
         # calculate INDICES for grid boundaries 
-        idxl, idxr = self.idx_bndry(xbl,xbr)
+        if self.lgrid == 1:
+            idxl, idxr = self.idx_bndry(self.xbl,self.xbr)
 		
         # create FIGURE
         plt.figure(figsize=(7,6))
@@ -551,9 +650,11 @@ class PROMPI_eqs(calc.CALCULUS,object):
         # format AXIS, make sure it is exponential
         plt.gca().yaxis.get_major_formatter().set_powerlimits((0,0))		
 		
+        print(self.lgrid)
+		
         # limit x/y axis
         if self.lgrid == 1:
-            plt.axis([xbl,xbr,np.min(plt1[idxl:idxr]),np.max(plt1[idxl:idxr])])
+            plt.axis([self.xbl,self.xbr,np.min(plt1[idxl:idxr]),np.max(plt1[idxl:idxr])])
         else:
             plt.axis([grd1[0],grd1[-1],np.min(plt1[0:-1]),np.max(plt1[0:-1])])	
 		
@@ -576,7 +677,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         # save PLOT
         plt.savefig('RESULTS/'+data_prefix+'mean_tke.png')		
 
-    def plot_tke_equation(self,xbl,xbr,data_prefix):
+    def plot_tke_equation(self,data_prefix):
         """Plot turbulent kinetic energy equation in the model""" 
 		
         # load x GRID
@@ -591,10 +692,11 @@ class PROMPI_eqs(calc.CALCULUS,object):
         rhs3 = - self.divfpx
         rhs4 = - self.rgradu
 		
-        res = self.resTkeEquation
+        res = - self.resTkeEquation
 		
         # calculate INDICES for grid boundaries 
-        idxl, idxr = self.idx_bndry(xbl,xbr)
+        if self.lgrid == 1:
+            idxl, idxr = self.idx_bndry(self.xbl,self.xbr)
 		
         # create FIGURE
         plt.figure(figsize=(7,6))
@@ -608,7 +710,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
 			np.min(rhs1[idxl:idxr]),np.min(rhs2[idxl:idxr]),np.min(rhs3[idxl:idxr]),np.min(rhs4[idxl:idxr]),np.min(res[idxl:idxr])])
             maxx = np.max([np.max(lhs0[idxl:idxr]),np.max(lhs1[idxl:idxr]),np.max(rhs0[idxl:idxr]),\
 			np.max(rhs1[idxl:idxr]),np.max(rhs2[idxl:idxr]),np.max(rhs3[idxl:idxr]),np.max(rhs4[idxl:idxr]),np.max(res[idxl:idxr])])
-            plt.axis([xbl,xbr,minx,maxx])
+            plt.axis([self.xbl,self.xbr,minx,maxx])
         else:
             minx = np.min([np.min(lhs0[0:-1]),np.min(lhs1[0:-1]),np.min(rhs0[0:-1]),np.min(rhs1[0:-1]),\
 			np.min(rhs2[0:-1]),np.min(rhs3[0:-1]),np.min(rhs4[0:-1]),np.min(res[0:-1])])
@@ -635,7 +737,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         plt.ylabel(setylabel)
 		
         # show LEGEND
-        plt.legend(loc=1,prop={'size':12})
+        plt.legend(loc=1,prop={'size':8})
 
         # display PLOT
         plt.show(block=False)
@@ -643,7 +745,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         # save PLOT
         plt.savefig('RESULTS/'+data_prefix+'tke_eq.png')		
 	
-    def plot_ei(self,xbl,xbr,data_prefix):
+    def plot_ei(self,data_prefix):
         """Plot mean Favrian internal energy stratification in the model""" 
 		
         # load x GRID
@@ -652,8 +754,9 @@ class PROMPI_eqs(calc.CALCULUS,object):
         # load DATA to plot
         plt1 = self.ddei/self.dd
 		
-        # calculate INDICES for grid boundaries 
-        idxl, idxr = self.idx_bndry(xbl,xbr)
+        # calculate INDICES for grid boundaries
+        if self.lgrid == 1:  
+            idxl, idxr = self.idx_bndry(self.xbl,self.xbr)
 		
         # create FIGURE
         plt.figure(figsize=(7,6))
@@ -663,7 +766,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
 		
         # limit x/y axis
         if self.lgrid == 1:
-            plt.axis([xbl,xbr,np.min(plt1[idxl:idxr]),np.max(plt1[idxl:idxr])])
+            plt.axis([self.xbl,self.xbr,np.min(plt1[idxl:idxr]),np.max(plt1[idxl:idxr])])
         else:
             plt.axis([grd1[0],grd1[-1],np.min(plt1[0:-1]),np.max(plt1[0:-1])])	
 		
@@ -687,7 +790,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         plt.savefig('RESULTS/'+data_prefix+'mean_ei.png')
 	
 
-    def plot_ei_equation(self,xbl,xbr,data_prefix):
+    def plot_ei_equation(self,data_prefix):
         """Plot internal energy equation in the model""" 
 		
         # load x GRID
@@ -703,10 +806,11 @@ class PROMPI_eqs(calc.CALCULUS,object):
         rhs4 = + self.ddenuc
         rhs5 = + self.disstke
 		
-        res = self.resEiEquation
+        res = - self.resEiEquation
 		
         # calculate INDICES for grid boundaries 
-        idxl, idxr = self.idx_bndry(xbl,xbr)
+        if self.lgrid == 1:
+            idxl, idxr = self.idx_bndry(self.xbl,self.xbr)
 		
         # create FIGURE
         plt.figure(figsize=(7,6))
@@ -720,7 +824,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
 			np.min(rhs1[idxl:idxr]),np.min(rhs2[idxl:idxr]),np.min(rhs3[idxl:idxr]),np.min(rhs4[idxl:idxr]),np.min(rhs5[idxl:idxr]),np.min(res[idxl:idxr])])
             maxx = np.max([np.max(lhs0[idxl:idxr]),np.max(lhs1[idxl:idxr]),np.max(rhs0[idxl:idxr]),\
 			np.max(rhs1[idxl:idxr]),np.max(rhs2[idxl:idxr]),np.max(rhs3[idxl:idxr]),np.max(rhs4[idxl:idxr]),np.max(rhs5[idxl:idxr]),np.max(res[idxl:idxr])])
-            plt.axis([xbl,xbr,minx,maxx])
+            plt.axis([self.xbl,self.xbr,minx,maxx])
         else:
             minx = np.min([np.min(lhs0[0:-1]),np.min(lhs1[0:-1]),np.min(rhs0[0:-1]),np.min(rhs1[0:-1]),\
 			np.min(rhs2[0:-1]),np.min(rhs3[0:-1]),np.min(rhs4[0:-1]),np.min(rhs5[0:-1]),np.min(res[0:-1])])
@@ -749,7 +853,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         plt.ylabel(setylabel)
 		
         # show LEGEND
-        plt.legend(loc=1,prop={'size':12})
+        plt.legend(loc=9,prop={'size':8})
 
         # display PLOT
         plt.show(block=False)
@@ -757,7 +861,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         # save PLOT
         plt.savefig('RESULTS/'+data_prefix+'ei_eq.png')
 		
-    def plot_ss(self,xbl,xbr,data_prefix):
+    def plot_ss(self,data_prefix):
         """Plot mean Favrian entropy stratification in the model""" 
 		
         # load x GRID
@@ -767,7 +871,8 @@ class PROMPI_eqs(calc.CALCULUS,object):
         plt1 = self.ddss/self.dd
 		
         # calculate INDICES for grid boundaries 
-        idxl, idxr = self.idx_bndry(xbl,xbr)
+        if self.lgrid == 1:
+            idxl, idxr = self.idx_bndry(self.xbl,self.xbr)
 		
         # create FIGURE
         plt.figure(figsize=(7,6))
@@ -777,7 +882,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
 		
         # limit x/y axis
         if self.lgrid == 1:
-            plt.axis([xbl,xbr,np.min(plt1[idxl:idxr]),np.max(plt1[idxl:idxr])])
+            plt.axis([self.xbl,self.xbr,np.min(plt1[idxl:idxr]),np.max(plt1[idxl:idxr])])
         else:
             plt.axis([grd1[0],grd1[-1],np.min(plt1[0:-1]),np.max(plt1[0:-1])])	
 		
@@ -800,7 +905,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         # save PLOT
         plt.savefig('RESULTS/'+data_prefix+'mean_ss.png')
 		
-    def plot_ss_equation(self,xbl,xbr,data_prefix):
+    def plot_ss_equation(self,data_prefix):
         """Plot entropy equation in the model""" 
 		
         # load x GRID
@@ -814,10 +919,11 @@ class PROMPI_eqs(calc.CALCULUS,object):
         rhs2 = + self.ddenucT
         rhs3 = + self.disstkeT
 		
-        res = self.resSEquation
+        res = -self.resSEquation
 		
         # calculate INDICES for grid boundaries 
-        idxl, idxr = self.idx_bndry(xbl,xbr)
+        if self.lgrid == 1:
+            idxl, idxr = self.idx_bndry(self.xbl,self.xbr)
 		
         # create FIGURE
         plt.figure(figsize=(7,6))
@@ -831,7 +937,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
 			np.min(rhs1[idxl:idxr]),np.min(rhs2[idxl:idxr]),np.min(rhs3[idxl:idxr]),np.min(res[idxl:idxr])])
             maxx = np.max([np.max(lhs0[idxl:idxr]),np.max(lhs1[idxl:idxr]),np.max(rhs0[idxl:idxr]),\
 			np.max(rhs1[idxl:idxr]),np.max(rhs2[idxl:idxr]),np.max(rhs3[idxl:idxr]),np.max(res[idxl:idxr])])
-            plt.axis([xbl,xbr,minx,maxx])
+            plt.axis([self.xbl,self.xbr,minx,maxx])
         else:
             minx = np.min([np.min(lhs0[0:-1]),np.min(lhs1[0:-1]),np.min(rhs0[0:-1]),np.min(rhs1[0:-1]),\
 			np.min(rhs2[0:-1]),np.min(rhs3[0:-1]),np.min(res[0:-1])])
@@ -858,7 +964,7 @@ class PROMPI_eqs(calc.CALCULUS,object):
         plt.ylabel(setylabel)
 		
         # show LEGEND
-        plt.legend(loc=1,prop={'size':12})
+        plt.legend(loc=8,prop={'size':8})
 
         # display PLOT
         plt.show(block=False)
@@ -866,87 +972,23 @@ class PROMPI_eqs(calc.CALCULUS,object):
         # save PLOT
         plt.savefig('RESULTS/'+data_prefix+'ss_eq.png')
 		
-    def properties(self,xbl,xbr,data_prefix):
+    def properties(self):
         """ Print properties of your simulation""" 
-
-        # PROPERTIES #
-
-        rc = self.xzn0		
-		
-        # get inner and outer boundary of computational domain  
-
-        rin = self.xzn0[0]
-        rout = self.xzn0[self.nx-1]
-
-        # load TKE dissipation
-        diss = self.resTkeEquation
-
-        # calculate INDICES for grid boundaries 
-        idxl, idxr = self.idx_bndry(xbl,xbr)		
-		
-        # Get rid of the numerical mess at inner boundary 
-        diss[0:idxl] = 0.
-        # Get rid of the numerical mess at outer boundary 
-        diss[idxr:self.nx] = 0.
- 
-        diss_max = diss.max()
-        ind = np.where( (diss > 0.02*diss_max) )[0]
-
-        rinc  = rc[ind[0]]
-        routc = rc[ind[-1]]
-
-        ibot = ind[0]
-        itop = ind[-1]
-
-        Vol = 4./3.*np.pi*(self.xznr**3-self.xznl**3)
-
-        # Calculate full dissipation rate and timescale
-        TKE = (self.dd*self.tke*Vol)[ind].sum()
-        epsD = (diss*Vol)[ind].sum()
-        tD = TKE/epsD
-
-        # RMS velocities
-        M=(self.dd*Vol)[ind].sum()
-        urms = np.sqrt(2.*TKE/M)
-
-        # Turnover timescale
-        tc = 2.*(routc-rinc)/urms
-
-        # Dissipation length-scale
-        ld = M*urms**3./epsD
-
-        # Total nuclear luminosity
-        tenuc = ((self.dd*(self.enuc1+self.enuc2))*Vol)[ind].sum()
-
-        # Pturb over Pgas (work in progress, no gam1)
-        #cs2 = (self.gam1*self.pp)/self.dd
-        #ur2 = self.uxux
-        #pturb_o_pgas = (self.gam1*ur2/cs2)[ind].mean()
-    
-        # Calculate size of convection zone in pressure scale heights
-
-        hp = -self.pp/self.Grad(self.pp,self.xzn0)
-        pbot = self.pp[ibot]
-        lcz_vs_hp = np.log(pbot/self.pp[ibot:itop])
-
-        # Reynolds number
-		# todo
-		
 		
         print '---------------'
         print 'Resolution: %i' % self.nx,self.ny,self.nz
-        print 'Radial size of computational domain (in cm): %.2e %.2e' % (rin,rout)
-        print 'Radial size of convection zone (in cm):  %.2e %.2e' % (rinc,routc)
-        print 'Extent of convection zone (in Hp): %f' % lcz_vs_hp[itop-ibot-1]
+        print 'Radial size of computational domain (in cm): %.2e %.2e' % (self.rin,self.rout)
+        print 'Radial size of convection zone (in cm):  %.2e %.2e' % (self.rinc,self.routc)
+        print 'Extent of convection zone (in Hp): %f' % self.lcz_vs_hp[self.itop-self.ibot-1]
         print 'Averaging time window (in s): %f' % self.tavg
-        print 'RMS velocities in convection zone (in cm/s):  %.2e' % urms
-        print 'Convective turnover timescale (in s)  %.2e' % tc
+        print 'RMS velocities in convection zone (in cm/s):  %.2e' % self.urms
+        print 'Convective turnover timescale (in s)  %.2e' % self.tc
         #print 'P_turb o P_gas %.2e' % pturb_o_pgas
-        print 'Dissipation length scale (in cm): %.2e' % ld
-        print 'Total nuclear luminosity (in erg/s): %.2e' % tenuc
-        print 'Rate of TKE dissipation (in erg/s): %.2e' % epsD
-        print 'Dissipation timescale for TKE (in s): %f' % tD
-        #print 'Reynolds number: %f' % self.Re
+        print 'Dissipation length scale (in cm): %.2e' % self.ld
+        print 'Total nuclear luminosity (in erg/s): %.2e' % self.tenuc
+        print 'Rate of TKE dissipation (in erg/s): %.2e' % self.epsD
+        print 'Dissipation timescale for TKE (in s): %f' % self.tD
+        print 'Reynolds number: %i' % self.Re
         #print 'Dissipation timescale for radial TKE (in s): %f' % self.tD_rad
         #print 'Dissipation timescale for horizontal TKE (in s): %f' % self.tD_hor
 		
@@ -961,8 +1003,9 @@ class PROMPI_eqs(calc.CALCULUS,object):
         rr = np.asarray(self.xzn0)
         xlm = np.abs(rr-xbl)
         xrm = np.abs(rr-xbr)
-        idxl = int(np.where(xlm==xlm.min())[0])
-        idxr = int(np.where(xrm==xrm.min())[0])	
+#        print(np.where(xlm==xlm.min())[0][0])
+        idxl = int(np.where(xlm==xlm.min())[0][0])
+        idxr = int(np.where(xrm==xrm.min())[0][0])	
         return idxl,idxr
 		
 		

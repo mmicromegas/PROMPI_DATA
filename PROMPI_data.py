@@ -22,6 +22,12 @@ class PROMPI_ransdat:
         header_line3 = fhead.readline().split()
         header_line4 = fhead.readline().split()
 
+#       Cyril's output + 4 lines		
+        header_line5 = fhead.readline().split()
+        header_line6 = fhead.readline().split()
+        header_line7 = fhead.readline().split()
+        header_line8 = fhead.readline().split()
+		
         self.nstep       = int(header_line1[0])
         self.rans_tstart = float(header_line1[1])
         self.rans_tend   = float(header_line1[2])
@@ -33,12 +39,14 @@ class PROMPI_ransdat:
         self.nnuc   = int(header_line2[3])
         self.nrans  = int(header_line2[4])
         ndims = [4,self.nrans,self.qqx]
+		
 
         self.ransl = []		
         for line in range(self.nrans):
             line = fhead.readline().strip()
             self.ransl.append(line)
-
+#            print(self.nrans,line)
+			
 #        for inuc in range(nspec):
 #            self.ransl = [field.replace(str(inuc+1),str(xnuc[inuc])) for field in self.ransl]
 #            self.ransl = [field.replace("0","") for field in self.ransl]    

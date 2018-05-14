@@ -4,10 +4,10 @@ import os
 import sys
 import matplotlib.pyplot as plt       
 	   
-datadir = './DATA/'
+datadir = 'C:\Users\mmocak\Desktop\CYRILdata\DATANeshell\DATANeshell\DATA\\'
 dataout = 'tseries_ransout'
-trange = [0.0 ,0.2]
-tavg = 0.05
+trange = [100. ,500.]
+tavg = 350.
 
 ransdat = [file for file in os.listdir(datadir) if "ransdat" in file]
 ransdat = [file.replace(file,datadir+file) for file in ransdat]	
