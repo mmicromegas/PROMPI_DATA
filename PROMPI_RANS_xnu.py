@@ -375,6 +375,8 @@ class PROMPI_xnu(calc.CALCULUS,object):
         rhs0 = - self.divfxi
         rhs1 = + self.ddXidot
 		
+        print(self.ddXidot)
+		
         res = - self.resXiTransport
 		
         # calculate INDICES for grid boundaries 
