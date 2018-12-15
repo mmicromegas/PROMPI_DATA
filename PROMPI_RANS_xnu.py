@@ -129,7 +129,7 @@ class PROMPI_xnu(calc.CALCULUS,object):
         self.divdduxsigmai = self.Div((self.ddxisq -self.ddxi*self.ddxi/self.dd)*(self.ddux/self.dd),self.xzn0)
 
         # RHS div f^sigma
-        self.divfxir = self.Div(self.ddxisqux/self.dd - \
+        self.divfxir = self.Div(self.ddxisqux - \
                        2.*self.ddxiux*self.ddxi/self.dd  - \
                        self.ddxisq*self.ddux/self.dd + \
                        2.*self.ddxi*self.ddxi*self.ddux/(self.dd*self.dd),self.xzn0)
@@ -648,8 +648,8 @@ class PROMPI_xnu(calc.CALCULUS,object):
         plt.title('Xvariance equation xnucid '+str(xnucid))
         plt.plot(grd1,lhs0,color='cyan',label = r'$-\partial_t (\overline{\rho} \sigma)$')
         plt.plot(grd1,lhs1,color='purple',label = r'$-\nabla_r (\overline{\rho} \widetilde{u}_r \sigma)$')		
-        plt.plot(grd1,rhs0,color='b',label=r'$-\nabla_r f^\sigma$')
-        plt.plot(grd1,rhs1,color='g',label=r'$-2 f \partial_r \widetilde{X}$')
+        plt.plot(grd1,rhs1,color='b',label=r'$-\nabla_r f^\sigma$')
+        plt.plot(grd1,rhs0,color='g',label=r'$-2 f \partial_r \widetilde{X}$')
         plt.plot(grd1,rhs2,color='r',label=r'$+2 \overline{\rho X^{,,} \dot{X}}$')		
         plt.plot(grd1,rhs3,color='k',label=r'$+ \overline{\rho} \sigma / \tau_L$')		
         plt.plot(grd1,res,color='k',linestyle='--',label='res')
